@@ -51,6 +51,7 @@ footer a{color:#aaa;text-decoration:none}
     <span class="badge">📐 Export DXF AC1009</span>
     <span class="badge">⚙️ CNC 3 axes</span>
     <span class="badge">📶 Fonctionne hors ligne</span>
+    <span class="badge">🧩 Forme DXF personnalisée</span>
     <span class="badge">🆓 Gratuit &amp; open source</span>
   </div>
   <a href="index.html" class="hero-cta">▶ Ouvrir le générateur</a>
@@ -59,35 +60,48 @@ footer a{color:#aaa;text-decoration:none}
 <article>
 
 <h2>Qu'est-ce que DwgBox ?</h2>
-<p>DwgBox est une application web qui génère automatiquement les fichiers DXF nécessaires à l'usinage de boîtes en bois sur une fraiseuse CNC 3 axes. Vous saisissez vos dimensions, vos paramètres d'outil et vos préférences d'emboîtement — l'application calcule toutes les cotes et produit deux fichiers DXF prêts à importer dans votre logiciel de FAO.</p>
+<p>DwgBox est une application web qui génère automatiquement les fichiers DXF nécessaires à l'usinage de boîtes en bois sur une fraiseuse CNC 3 axes. Vous saisissez vos dimensions, vos paramètres d'outil et vos préférences d'emboîtement — l'application calcule toutes les cotes et produit deux fichiers DXF prêts à importer dans votre logiciel de FAO. Vous pouvez partir d'une forme classique (rectangle, cercle, hexagone) ou de <strong>votre propre dessin DXF</strong>.</p>
 
 <p>Elle répond à un besoin concret du travail du bois CNC : gérer correctement la géométrie de l'emboîtement base/couvercle, le déport de la fraise ball-nose pour le fond, et le jeu fonctionnel du couvercle — sans erreur de calcul.</p>
 
 <div class="highlight">
-  <strong>URL :</strong> <a href="https://chtipanda.github.io/dwgbox/">https://chtipanda.github.io/dwgbox/</a><br>
+  <strong>URL :</strong> <a href="https://chtipanda.github.io/dxfbox/">https://chtipanda.github.io/dxfbox/</a><br>
   <strong>Compatible :</strong> Aspire (Vectric), CamBam, Krabscam<br>
-  <strong>Format DXF :</strong> AC1009 (AutoCAD R12) — lignes et arcs simples, sans blocs ni splines
+  <strong>Format DXF :</strong> AC1009 (AutoCAD R12) — lignes, arcs et cercles simples, sans blocs, polylignes ni splines
 </div>
 
 <h2>Pourquoi cette application ?</h2>
 <p>Usiner une boîte en bois semble simple, mais plusieurs contraintes CNC se cumulent :</p>
 <ul>
   <li>La <strong>fraise ball-nose</strong> utilisée pour le fond crée un congé de rayon R — il faut donc programmer le chemin d'outil décalé de R/2 vers l'intérieur pour que le fond soit correctement formé.</li>
-  <li>L'<strong>emboîtement base/couvercle</strong> nécessite un jeu fonctionnel précis, appliqué au bon endroit (sur le tenon, pas sur la rainure).</li>
-  <li>La <strong>rainure</strong> est prise dans l'épaisseur de la paroi — il reste un tenon dont la largeur doit être calculée et validée pour ne pas être fragile.</li>
-  <li>Les DXF doivent être en <strong>géométrie simple</strong> (lignes + arcs) pour être compatibles avec les logiciels de FAO artisanaux.</li>
+  <li>L'<strong>emboîtement base/couvercle</strong> nécessite un jeu fonctionnel précis, appliqué au bon endroit selon le type d'emboîtement choisi.</li>
+  <li>La <strong>rainure</strong> ou la <strong>feuillure</strong> est prise dans l'épaisseur de la paroi — il reste un mur dont l'épaisseur doit être calculée et validée pour ne pas être fragile.</li>
+  <li>Une <strong>fraise ronde</strong> ne peut pas faire d'angle vif : sur une forme libre, les pointes et les creux doivent être arrondis au rayon de l'outil, sans casser les jeux entre les pièces.</li>
+  <li>Les DXF doivent être en <strong>géométrie simple</strong> (lignes, arcs, cercles) pour être compatibles avec les logiciels de FAO artisanaux.</li>
 </ul>
 <p>DwgBox automatise tout ce calcul et avertit si les paramètres sont incohérents avant même de lancer la machine.</p>
 
 <h2>Fonctionnalités</h2>
 <div class="grid">
-  <div class="card"><div class="card-icon">📦</div><h4>3 formes disponibles</h4><p>Rectangulaire, ronde (cercle) et hexagonale — chacune avec calcul d'offset correct.</p></div>
-  <div class="card"><div class="card-icon">🔧</div><h4>Emboîtement paramétrable</h4><p><strong>Recouvrement</strong> : le couvercle englobe la base par-dessus. <strong>Intérieur (tenon)</strong> : le tenon du couvercle s'insère dans le creux de la base. Largeur et profondeur de rainure libres, jeu fonctionnel réglable.</p></div>
+  <div class="card"><div class="card-icon">📦</div><h4>4 formes disponibles</h4><p>Rectangulaire, ronde (cercle), hexagonale — chacune avec calcul d'offset correct — et personnalisée à partir d'un fichier DXF.</p></div>
+  <div class="card"><div class="card-icon">🔧</div><h4>4 types d'emboîtement</h4><p>Recouvrement extérieur, recouvrement interne, épaulement externe, épaulement interne. Largeur et profondeur de rainure libres, jeu fonctionnel réglable.</p></div>
+  <div class="card"><div class="card-icon">🧩</div><h4>Forme DXF personnalisée</h4><p>Importez un contour fermé : l'application le met à l'échelle, arrondit les angles au rayon de la fraise et calcule tous les contours de la base et du couvercle.</p></div>
   <div class="card"><div class="card-icon">🎯</div><h4>Chemin fond ball-nose</h4><p>Ligne déportée de Ø/2 automatiquement calculée et placée sur une couche dédiée.</p></div>
-  <div class="card"><div class="card-icon">⚠️</div><h4>Détection d'erreurs</h4><p>Alertes en temps réel si le tenon est trop mince, la fraise trop grande, ou le couvercle trop bas.</p></div>
-  <div class="card"><div class="card-icon">📄</div><h4>DXF multi-couches</h4><p>5 couches nommées pour assigner les stratégies d'usinage couche par couche dans votre FAO.</p></div>
+  <div class="card"><div class="card-icon">⚠️</div><h4>Détection d'erreurs</h4><p>Alertes en temps réel : tenon trop mince, rainure trop large pour la paroi, ball-nose trop grand, couvercle trop bas, cavité vide.</p></div>
+  <div class="card"><div class="card-icon">📄</div><h4>DXF multi-couches</h4><p>5 couches nommées pour assigner les stratégies d'usinage couche par couche dans votre FAO, et une notice d'usinage générée selon vos réglages.</p></div>
+  <div class="card"><div class="card-icon">📐</div><h4>Aperçu et coupes</h4><p>Vue de dessus de la base et du couvercle, et pictogramme en coupe de l'emboîtement choisi.</p></div>
   <div class="card"><div class="card-icon">📶</div><h4>PWA hors ligne</h4><p>Installable sur PC ou mobile. Fonctionne sans connexion internet une fois chargée.</p></div>
 </div>
+
+<h2>Les 4 emboîtements</h2>
+<p>Pour chaque emboîtement, la base et le couvercle ont un profil différent. <code>e</code> est l'épaisseur de la paroi, <code>gW</code> la largeur de rainure (ou épaisseur de la lèvre), <code>gD</code> la profondeur.</p>
+<table class="layer-table">
+  <tr><th>Emboîtement</th><th>Base</th><th>Couvercle</th></tr>
+  <tr><td><strong>Recouvrement extérieur</strong></td><td>Boîte simple</td><td>Plus grand que la base de <code>gW + jeu</code> de chaque côté ; une jupe de <code>gW</code> enveloppe la base par l'extérieur (poche de profondeur <code>gD</code>)</td></tr>
+  <tr><td><strong>Recouvrement interne</strong></td><td>Boîte simple</td><td>Même contour que la base ; un tenon plein, à <code>e + jeu</code> du bord, entre dans la cavité</td></tr>
+  <tr><td><strong>Épaulement externe</strong></td><td>Feuillure sur le bord extérieur du mur (largeur <code>gW + jeu</code>, profondeur <code>gD</code>)</td><td>Même contour ; une lèvre de <code>gW</code> (= l'épaulement) repose sur la feuillure. Couvercle jointif : jeu sur le côté de la lèvre et au-dessus de la base</td></tr>
+  <tr><td><strong>Épaulement interne</strong></td><td>Feuillure sur le bord intérieur du mur (à <code>e − gW</code> du bord)</td><td>Même contour ; un tenon plein, à <code>e − gW + jeu</code> du bord, se pose dans la feuillure</td></tr>
+</table>
 
 <h2>Structure des fichiers DXF</h2>
 <p>Chaque export produit deux fichiers séparés (base et couvercle), chacun organisé en couches nommées :</p>
@@ -97,30 +111,41 @@ footer a{color:#aaa;text-decoration:none}
   <tr><td><code><span class="color-dot" style="background:#333"></span>CONTOUR_EXT</code></td><td>Contour extérieur de la pièce</td><td>Profil de découpe (côté à préciser)</td></tr>
   <tr><td><code><span class="color-dot" style="background:#0F6E56"></span>CAVITE_INT</code></td><td>Cavité intérieure</td><td>Opération Pocket (vidage)</td></tr>
   <tr><td><code><span class="color-dot" style="background:#BA7517"></span>FOND_BALLNOSE</code></td><td>Chemin fond déporté de Ø/2</td><td>Profil avec fraise ball-nose</td></tr>
-  <tr><td><code><span class="color-dot" style="background:#D85A30"></span>RAINURE_EXT</code></td><td>Bord extérieur de la rainure</td><td>Limite de la passe rainure</td></tr>
-  <tr><td><code><span class="color-dot" style="background:#c0392b"></span>RAINURE_INT</code></td><td>Bord intérieur de la rainure</td><td>Limite intérieure de la passe</td></tr>
+  <tr><td><code><span class="color-dot" style="background:#D85A30"></span>RAINURE_EXT</code></td><td>Bord de la feuillure (épaulement interne)</td><td>Limite de la poche de feuillure</td></tr>
+  <tr><td><code><span class="color-dot" style="background:#c0392b"></span>RAINURE_INT</code></td><td>Bord de la rainure, de la feuillure, de la poche ou du tenon, selon l'emboîtement</td><td>Limite de la passe (profondeur <code>gD</code>)</td></tr>
 </table>
 
+<h2>Forme personnalisée (DXF)</h2>
+<p>Dans la liste « Forme », choisissez <strong>Personnalisée (DXF)</strong> et importez votre fichier. Le champ de dimension devient la <strong>largeur de la forme</strong> : la hauteur suit les proportions de votre dessin, quelles que soient les unités du fichier.</p>
+<ul>
+  <li><strong>Éléments lus :</strong> polylignes (arcs compris), traits, arcs et cercles. Les traits et arcs qui se rejoignent sont assemblés en contour.</li>
+  <li><strong>Contour retenu :</strong> le plus grand contour fermé. Les autres éléments (traits ouverts, autres contours, splines) sont ignorés.</li>
+  <li><strong>Angles adaptés à l'usinage :</strong> les angles saillants et rentrants sont arrondis au rayon de la fraise (Ø fraise contour ÷ 2). Les cavités, feuillures et tenons sont calculés à partir de ce contour, donc une fraise ronde peut les suivre, et les jeux entre les pièces restent respectés autour des arrondis.</li>
+  <li><strong>Limites :</strong> un seul contour, sans trous. Si la paroi est trop épaisse pour la forme, l'application affiche « Cavité vide ».</li>
+</ul>
+<p>Le DXF exporté décrit la forme en petits segments de droite. Le calcul se fait entièrement dans la page, sans serveur : votre fichier n'est envoyé nulle part.</p>
+
 <h2>Calcul de l'emboîtement</h2>
-<p>Pour une paroi de <strong>6 mm</strong>, une rainure de <strong>3 mm</strong> et un jeu de <strong>0,2 mm</strong> :</p>
+<p>Pour une paroi de <strong>6 mm</strong>, une rainure de <strong>3 mm</strong>, une profondeur de <strong>4 mm</strong> et un jeu de <strong>0,2 mm</strong> :</p>
 <div class="highlight">
-  Tenon effectif = e − gW − jeu = 6 − 3 − 0,2 = <strong>2,8 mm</strong><br>
-  Reste côté extérieur = e − gW = <strong>3 mm</strong><br>
-  Le jeu est appliqué côté tenon (couvercle), la rainure de la base garde ses cotes nominales.
+  <strong>Recouvrement extérieur :</strong> le couvercle déborde de 3,2 mm de chaque côté (+6,4 mm en longueur et en largeur) ; jupe de 3 mm, poche de 4 mm.<br>
+  <strong>Recouvrement interne :</strong> tenon plein à 6,2 mm du bord, pour une cavité à 6 mm.<br>
+  <strong>Épaulement externe :</strong> feuillure de 3,2 mm × 4 mm ; mur restant = e − gW − jeu = 6 − 3 − 0,2 = <strong>2,8 mm</strong> ; lèvre de 3 mm ; poche du couvercle de 4,2 mm (jeu au-dessus).<br>
+  <strong>Épaulement interne :</strong> feuillure à partir de 3 mm du bord (mur extérieur gardé : 3 mm) ; tenon à 3,2 mm du bord.
 </div>
 
 <h2>Comment utiliser l'application</h2>
 <div class="steps">
-  <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Choisir la forme et le type d'emboîtement</h4><p>Rectangulaire, ronde ou hexagonale. <strong>Recouvrement</strong> : le couvercle englobe la base par-dessus (rainure usinée dans sa face intérieure). <strong>Intérieur (tenon)</strong> : le tenon du couvercle s'insère dans le creux usiné de la base — le couvercle repose à plat sur le dessus sans usinage supplémentaire de la base.</p></div></div>
-  <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Saisir les dimensions extérieures</h4><p>Longueur, largeur, hauteur totale. Régler le curseur de ratio base/couvercle.</p></div></div>
-  <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Paramétrer les outils</h4><p>Diamètre de la fraise ball-nose (fond), diamètre et côté de la fraise de contour.</p></div></div>
-  <div class="step"><div class="step-num">4</div><div class="step-body"><h4>Définir la rainure et le jeu</h4><p>Largeur et profondeur de rainure, jeu fonctionnel. L'application affiche le tenon résultant et avertit si les cotes sont incompatibles.</p></div></div>
-  <div class="step"><div class="step-num">5</div><div class="step-body"><h4>Télécharger les DXF</h4><p>Deux boutons : <em>boite_base.dxf</em> et <em>boite_couvercle.dxf</em>. Importer dans Aspire, CamBam ou Krabscam et assigner les stratégies par couche.</p></div></div>
+  <div class="step"><div class="step-num">1</div><div class="step-body"><h4>Choisir la forme et le type d'emboîtement</h4><p>Rectangulaire, ronde, hexagonale, ou personnalisée (import d'un fichier DXF). Puis l'un des 4 emboîtements : le pictogramme en coupe montre la base et le couvercle.</p></div></div>
+  <div class="step"><div class="step-num">2</div><div class="step-body"><h4>Saisir les dimensions extérieures</h4><p>Longueur, largeur, hauteur totale (largeur de la forme pour un DXF importé). Régler le curseur de ratio base/couvercle.</p></div></div>
+  <div class="step"><div class="step-num">3</div><div class="step-body"><h4>Paramétrer les outils</h4><p>Diamètre de la fraise ball-nose (fond), diamètre et côté de la fraise de contour. Pour une forme DXF, le rayon de la fraise de contour fixe aussi l'arrondi minimal des angles.</p></div></div>
+  <div class="step"><div class="step-num">4</div><div class="step-body"><h4>Définir la rainure et le jeu</h4><p>Largeur et profondeur de rainure (ou épaisseur de la lèvre), jeu fonctionnel. L'application avertit si les cotes sont incompatibles.</p></div></div>
+  <div class="step"><div class="step-num">5</div><div class="step-body"><h4>Télécharger les DXF</h4><p>Deux boutons : <em>boite_base.dxf</em> et <em>boite_couvercle.dxf</em>. L'onglet Notice donne l'ordre d'usinage. Importer dans Aspire, CamBam ou Krabscam et assigner les stratégies par couche.</p></div></div>
 </div>
 
 <h2>Compatibilité logiciels FAO</h2>
 <ul>
-  <li><strong>Aspire (Vectric) :</strong> Fichier &gt; Importer &gt; Vecteurs DXF. Sélectionner les couches et assigner : Pocket → <code>CAVITE_INT</code>, Profile → <code>CONTOUR_EXT</code> &amp; <code>FOND_BALLNOSE</code>.</li>
+  <li><strong>Aspire (Vectric) :</strong> Fichier &gt; Importer &gt; Vecteurs DXF. Sélectionner les couches et assigner : Pocket → <code>CAVITE_INT</code>, Profile → <code>CONTOUR_EXT</code> &amp; <code>FOND_BALLNOSE</code>. Les couches <code>RAINURE_*</code> servent aux passes de rainure, de feuillure ou de poche selon l'emboîtement.</li>
   <li><strong>CamBam :</strong> Ouvrir le .dxf directement. Sélectionner la couche et créer une opération (MachineOp) par couche.</li>
   <li><strong>Krabscam :</strong> Import DXF, les couches sont reconnues et listées automatiquement.</li>
 </ul>
@@ -136,12 +161,12 @@ footer a{color:#aaa;text-decoration:none}
 
 <h2>À propos</h2>
 <p>DwgBox est un projet open source développé par <a href="https://github.com/chtipanda">chtipanda</a>, passionné de CNC et de travail du bois. Il est hébergé gratuitement sur GitHub Pages.</p>
-<p>Le code source est disponible sur <a href="https://github.com/chtipanda/dwgbox">github.com/chtipanda/dwgbox</a>.</p>
+<p>Le code source est disponible sur <a href="https://github.com/chtipanda/dxfbox">github.com/chtipanda/dxfbox</a>.</p>
 
 </article>
 
 <footer>
-  DwgBox — <a href="index.html">Ouvrir l'application</a> · <a href="https://github.com/chtipanda/dwgbox">GitHub</a> · Hébergé sur GitHub Pages
+  DwgBox — <a href="index.html">Ouvrir l'application</a> · <a href="https://github.com/chtipanda/dxfbox">GitHub</a> · Hébergé sur GitHub Pages
 </footer>
 
 </body>
