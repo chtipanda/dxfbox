@@ -529,6 +529,26 @@ function spec(p,lid){
  return[[0,'CONTOUR_EXT'],[e-gW+gap,'RAINURE_INT',e-gW]];
 }
 
+// Valeurs, texte et alerte propres à chaque emboîtement
+function fitInfo(p){
+ const{e,gW,gap,fitType:f}=p,r=x=>+x.toFixed(2);
+ if(f==='overlay')return{ml:'Jupe',mv:r(gW)+' mm',
+  txt:`Jupe du couvercle : <b>${r(gW)} mm</b>, jeu côté <b>${r(gap)} mm</b><br>Couvercle plus grand de <b>${r(2*(gW+gap))} mm</b> en longueur et en largeur`,
+  note:`Jupe du couvercle : ${r(gW)} mm ; couvercle plus grand de ${r(2*(gW+gap))} mm en longueur et en largeur`,
+  warn:gW<1?`Jupe trop mince (${r(gW)} mm) — augmenter la largeur de rainure`:null};
+ if(f==='inner')return{ml:'Tenon',mv:'à '+r(e+gap)+' mm',
+  txt:`Tenon plein à <b>${r(e+gap)} mm</b> du bord (cavité à ${r(e)} mm)`,
+  note:`Tenon plein à ${r(e+gap)} mm du bord (cavité à ${r(e)} mm)`,warn:null};
+ if(f==='shext'){const m=r(e-gW-gap);return{ml:'Mur restant',mv:m+' mm',
+  txt:`Paroi <b>${r(e)} mm</b> = feuillure <b>${r(gW+gap)} mm</b> + mur restant <b>${m} mm</b><br>Lèvre du couvercle (épaulement) : <b>${r(gW)} mm</b>`,
+  note:`Mur restant de la base : e − gW − jeu = ${m} mm ; lèvre du couvercle = ${r(gW)} mm`,
+  warn:m<1?`Mur restant trop mince (${m} mm) — augmenter e ou réduire gW/jeu`:null};}
+ const m=r(e-gW);return{ml:'Mur ext. gardé',mv:m+' mm',
+  txt:`Paroi <b>${r(e)} mm</b> = mur extérieur gardé <b>${m} mm</b> + feuillure <b>${r(gW)} mm</b><br>Tenon du couvercle à <b>${r(e-gW+gap)} mm</b> du bord`,
+  note:`Mur extérieur gardé : e − gW = ${m} mm ; tenon du couvercle à ${r(e-gW+gap)} mm du bord`,
+  warn:m<1?`Mur extérieur trop mince (${m} mm) — augmenter e ou réduire gW`:null};
+}
+
 function update(){
  const p=gp();
  updateFitPicto();
@@ -541,8 +561,7 @@ function update(){
  const hL=Math.round((p.H-hB)*10)/10;
  p.hB=hB;p.hL=hL;
  $('ratioHint').textContent=`Base ${hB} mm — Couvercle ${hL} mm`;
- const tenonMur=+(p.e-p.gW-p.gap).toFixed(2);
- const resteExt=+(p.e-p.gW).toFixed(2);
+ const fi=fitInfo(p);
  const fitDesc={
   overlay:"Recouvrement extérieur : le couvercle, plus grand que la base, a une jupe qui l'enveloppe par l'extérieur — poche usinée dans sa face intérieure.",
   inner:"Recouvrement interne : le couvercle, de même contour que la base, a un tenon plein qui s'insère dans la cavité de la base.",
@@ -550,12 +569,9 @@ function update(){
   shint:"Épaulement interne : feuillure usinée sur le bord intérieur de la base — le couvercle a un tenon plein qui s'y pose."
  };
  $('fitCalc').innerHTML=
-  `Paroi <b>${p.e} mm</b> = rainure <b>${p.gW} mm</b> + reste ext. <b>${resteExt} mm</b><br>
-Tenon effectif = e − gW − jeu = <b>${tenonMur} mm</b><br>
-${fitDesc[p.fitType]||''}`;
+  `${fi.txt}<br>${fitDesc[p.fitType]||''}`;
  const warns=[];
- if(tenonMur<1)warns.push(`Tenon trop mince (${tenonMur} mm) — augmenter e ou réduire gW/jeu`);
- if(p.gW>=p.e)warns.push(`Rainure (${p.gW}mm) ≥ épaisseur paroi (${p.e}mm) : impossible`);
+ if(fi.warn)warns.push(fi.warn);
  if(p.bn>p.e-0.5)warns.push(`Ball-nose Ø${p.bn}mm trop grand pour paroi ${p.e}mm`);
  if(p.hL<p.gD+2)warns.push(`Couvercle ${p.hL}mm trop bas pour rainure ${p.gD}mm`);
  const rMax=rect?Math.min(p.L,p.W)/2:p.shape==='hex'?p.L/2/HK:p.L/2;
@@ -573,7 +589,7 @@ ${fitDesc[p.fitType]||''}`;
 <div class="mv"><div class="ml">Haut. base</div><div class="mn">${hB} mm</div></div>
 <div class="mv"><div class="ml">Haut. couvercle</div><div class="mn">${hL} mm</div></div>
 <div class="mv"><div class="ml">Déport fond</div><div class="mn">${+(p.bn/2).toFixed(2)} mm</div></div>
-<div class="mv"><div class="ml">Tenon</div><div class="mn">${tenonMur} mm</div></div>
+<div class="mv"><div class="ml">${fi.ml}</div><div class="mn">${fi.mv}</div></div>
 <div class="mv"><div class="ml">Jeu</div><div class="mn">${p.gap} mm</div></div>
 <div class="mv"><div class="ml">Rainure l×p</div><div class="mn">${p.gW}×${p.gD} mm</div></div>`;
  draw('cvB',p,false);
@@ -590,13 +606,14 @@ const STY={
 function draw(id,p,lid){
  const cv=$(id),CW=cv.width,CH=cv.height,ctx=cv.getContext('2d'),pad=28;
  ctx.clearRect(0,0,CW,CH);
- const rect=p.shape==='rect',cust=p.shape==='custom',d1=p.L,d2=(rect||cust)?p.W:p.L,R=p.L/2;
+ const ext=lid?Math.max(0,-Math.min(...spec(p,lid).map(s=>s[0]))):0; // débord du couvercle (recouvrement extérieur)
+ const rect=p.shape==='rect',cust=p.shape==='custom',d1=p.L+2*ext,d2=((rect||cust)?p.W:p.L)+2*ext,R=p.L/2;
  const sc=Math.min((CW-2*pad)/d1,(CH-2*pad)/d2);
  const ox=pad+(CW-2*pad-d1*sc)/2,oy=pad+(CH-2*pad-d2*sc)/2;
  if(cust){
   customGeom(p,lid).forEach(([lay,loops])=>{
    const[col,lw,dash]=STY[lay];ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.setLineDash(dash||[]);
-   loops.forEach(P=>{ctx.beginPath();P.forEach((q,k)=>{const X=ox+q[0]*sc,Y=oy+(p.W-q[1])*sc;if(k)ctx.lineTo(X,Y);else ctx.moveTo(X,Y);});ctx.closePath();ctx.stroke();});
+   loops.forEach(P=>{ctx.beginPath();P.forEach((q,k)=>{const X=ox+(q[0]+ext)*sc,Y=oy+(p.W+ext-q[1])*sc;if(k)ctx.lineTo(X,Y);else ctx.moveTo(X,Y);});ctx.closePath();ctx.stroke();});
   });
  }else spec(p,lid).forEach(([d,lay])=>{
   const[col,lw,dash]=STY[lay];
@@ -605,8 +622,8 @@ function draw(id,p,lid){
    const w=p.L-2*d,h=p.W-2*d;
    if(w<=0||h<=0)return;
    const r=Math.min(3,w*sc/4,h*sc/4);
-   if(ctx.roundRect)ctx.roundRect(ox+d*sc,oy+d*sc,w*sc,h*sc,r);
-   else ctx.rect(ox+d*sc,oy+d*sc,w*sc,h*sc);
+   if(ctx.roundRect)ctx.roundRect(ox+(d+ext)*sc,oy+(d+ext)*sc,w*sc,h*sc,r);
+   else ctx.rect(ox+(d+ext)*sc,oy+(d+ext)*sc,w*sc,h*sc);
   }else{
    const cx=ox+d1*sc/2,cy=oy+d2*sc/2;
    if(p.shape==='round'){
@@ -672,7 +689,6 @@ function genDXF(p){
 }
 
 function genNotice(p){
- const tenonMur=+(p.e-p.gW-p.gap).toFixed(2);
  const shape=p.shape==='rect'?'Rectangulaire':p.shape==='round'?'Ronde':p.shape==='custom'?'Personnalisée (DXF)':'Hexagonale';
  const fit={overlay:'Recouvrement extérieur',inner:'Recouvrement interne',shext:'Épaulement externe',shint:'Épaulement interne'}[p.fitType]||p.fitType;
  $('notTxt').textContent=
@@ -690,8 +706,7 @@ CALCUL EMBOITEMENT
 Largeur rainure : ${p.gW} mm
 Profondeur rainure : ${p.gD} mm
 Jeu fonctionnel : ${p.gap} mm
-Reste côté ext. paroi : ${+(p.e-p.gW).toFixed(2)} mm
-Épaisseur tenon : e − gW − jeu = ${tenonMur} mm
+${fitInfo(p).note}
 Hauteur base : ${p.hB} mm
 Hauteur couvercle : ${p.hL} mm
 
