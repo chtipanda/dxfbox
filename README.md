@@ -14,7 +14,7 @@ Export DXF compatible **Aspire (Vectric)**, **CamBam**, **Krabscam**.
 - **4 types d'emboîtement** : recouvrement extérieur, recouvrement interne, épaulement externe, épaulement interne
 - Calcul automatique du **déport ball-nose** (fond de boîte)
 - **Jeu fonctionnel** paramétrable, appliqué sur les pièces qui s'emboîtent
-- Détection d'erreurs en temps réel (tenon trop mince, rainure trop large, cavité vide…)
+- Détection d'erreurs en temps réel, adaptée à l'emboîtement choisi (mur restant ou jupe trop mince, ball-nose trop grand, couvercle trop bas, cavité vide…)
 - Aperçu des deux pièces (vue dessus) et pictogrammes en coupe pour chaque emboîtement
 - Export **DXF AC1009** (R12) multi-couches, en lignes, arcs et cercles (ni polylignes ni splines)
 - **Notice d'usinage** générée selon les réglages
