@@ -1,10 +1,11 @@
-// DwgBox Service Worker — v1.0
-// https://chtipanda.github.io/dwgbox/
+// DwgBox Service Worker — v2.0
+// https://chtipanda.github.io/dxfbox/
 
-const CACHE_NAME = 'dwgbox-v1';
+const CACHE_NAME = 'dxfbox-v2';
 const ASSETS = [
   './',
   './index.html',
+  './article.html',
   './manifest.json',
   './icon-192.svg',
   './icon-512.svg'
