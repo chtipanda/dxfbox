@@ -91,6 +91,7 @@ button.p:hover{background:#0C447C}
 <option value="rect">Rectangulaire</option>
 <option value="round">Ronde (cercle)</option>
 <option value="hex">Hexagonale</option>
+<option value="custom">Personnalisée (DXF)</option>
 </select></div>
 <div class="f"><label>Emboîtement</label>
 <select id="fitType" onchange="updateFitPicto()">
@@ -100,6 +101,8 @@ button.p:hover{background:#0C447C}
 <option value="shint">Épaulement interne</option>
 </select></div>
 </div>
+
+<div class="f" id="fcust" style="display:none;margin-top:8px"><label>Fichier DXF (contour fermé)</label><input type="file" id="dxfFile" accept=".dxf"><span class="hint" id="dxfInfo">Polyligne fermée, ou traits/arcs qui se rejoignent</span></div>
 
 <div id="fitPicto">
 <div class="pk" id="picto-overlay">
@@ -127,16 +130,19 @@ button.p:hover{background:#0C447C}
 
 <div class="pk" id="picto-shext">
 <svg viewBox="0 0 100 80">
-<path class="pb" d="M80 8H20V39H31V17H80"/>
-<path class="pg" d="M80 72H20V40H32V18H44"/>
+<path class="pb" d="M80 8H20V40H32V17H80"/>
+<path class="pg" d="M80 72H20V40H33V18H44"/>
 <path class="pd" d="M44 18V72"/>
 <text class="pt" x="48" y="15" fill="#185FA5">COUVERCLE</text>
-<text class="pt" x="62" y="58" fill="#555">BASE</text>
-<path class="pj" style="stroke:#D85A30" d="M47 33L33 41"/>
-<text class="ps" x="48" y="35" fill="#D85A30">épaulement</text>
-<line class="pj" x1="25" y1="49" x2="25" y2="41" marker-end="url(#ar)"/>
-<text class="ps" x="27" y="51" fill="#E04">jeu</text></svg>
-<b>Épaulement externe</b><i>Feuillure sur le bord ext. de la base,<br>couvercle à jupe qui affleure</i></div>
+<text class="pt" x="62" y="62" fill="#555">BASE</text>
+<path class="pj" style="stroke:#D85A30" d="M46 43L27 36"/>
+<text class="ps" x="47" y="46" fill="#D85A30">épaulement</text>
+<text class="ps" x="47" y="52" fill="#D85A30">= lèvre</text>
+<path class="pj" d="M10 29H32.5"/>
+<text class="ps" x="2" y="31" fill="#E04">jeu</text>
+<path class="pj" d="M53 25L42 18.3"/>
+<text class="ps" x="54" y="27" fill="#E04">jeu</text></svg>
+<b>Épaulement externe</b><i>Épaulement = épaisseur de la lèvre,<br>couvercle jointif, jeu côté et dessus</i></div>
 
 <div class="pk" id="picto-shint">
 <svg viewBox="0 0 100 80">
@@ -192,7 +198,7 @@ button.p:hover{background:#0C447C}
 <div class="stitle">Rainure &amp; jeu fonctionnel</div>
 <div class="sbody">
 <div class="g3">
-<div class="f"><label>Largeur rainure</label><input type="number" id="gW" value="3" min="0.5" max="15" step="0.5"><span class="hint">Dans la paroi</span></div>
+<div class="f"><label>Largeur rainure / épaulement</label><input type="number" id="gW" value="3" min="0.5" max="15" step="0.5"><span class="hint">= épaisseur de la lèvre</span></div>
 <div class="f"><label>Profondeur rainure</label><input type="number" id="gD" value="4" min="1" max="20" step="0.5"></div>
 <div class="f"><label>Jeu fonctionnel</label><input type="number" id="gap" value="0.2" min="0" max="2" step="0.05"><span class="hint">Sur le tenon</span></div>
 </div>
@@ -259,8 +265,240 @@ window.addEventListener('online',badge);window.addEventListener('offline',badge)
 
 // Un hexagone décalé de d (perpendiculairement aux côtés) perd d*2/√3 de rayon
 const HK=2/Math.sqrt(3);
+// ── Forme personnalisée (DXF) ───────────────────────────────────────────────
+let CUST=null;
+function area(P){let a=0;for(let i=0,n=P.length;i<n;i++){const p=P[i],q=P[(i+1)%n];a+=p[0]*q[1]-q[0]*p[1];}return a/2;}
+// Distance signée (positive à l'intérieur) calculée dans une bande autour des contours
+function sdf(loops,g,band){
+ const{x0,y0,nx,ny,h}=g,n=nx*ny,F=new Float32Array(n),M=new Uint8Array(n);
+ for(let j=0;j<ny;j++){
+  const y=y0+j*h,xs=[];
+  for(const P of loops)for(let k=0,m=P.length;k<m;k++){
+   const p=P[k],q=P[(k+1)%m];
+   if((p[1]<=y)!==(q[1]<=y))xs.push(p[0]+(y-p[1])*(q[0]-p[0])/(q[1]-p[1]));
+  }
+  xs.sort((a,b)=>a-b);
+  for(let t=0;t+1<xs.length;t+=2){
+   const i1=Math.max(0,Math.ceil((xs[t]-x0)/h)),i2=Math.min(nx-1,Math.floor((xs[t+1]-x0)/h));
+   for(let i=i1;i<=i2;i++)M[j*nx+i]=1;
+  }
+ }
+ for(let i=0;i<n;i++)F[i]=M[i]?band:-band;
+ for(const P of loops)for(let k=0,m=P.length;k<m;k++){
+  const ax=P[k][0],ay=P[k][1],bx=P[(k+1)%m][0],by=P[(k+1)%m][1];
+  const dx=bx-ax,dy=by-ay,l2=dx*dx+dy*dy;
+  if(l2===0)continue;
+  const len=Math.sqrt(l2),qx=-dy/len,qy=dx/len,c=qx*ax+qy*ay;
+  const jl=Math.max(0,Math.floor((Math.min(ay,by)-band-y0)/h)),jh=Math.min(ny-1,Math.ceil((Math.max(ay,by)+band-y0)/h));
+  const xa=Math.min(ax,bx)-band,xb=Math.max(ax,bx)+band;
+  for(let j=jl;j<=jh;j++){
+   const y=y0+j*h;let lo=xa,hi=xb;
+   if(Math.abs(qx)>1e-9){
+    const u=(c-band-qy*y)/qx,v=(c+band-qy*y)/qx;
+    lo=Math.max(lo,Math.min(u,v));hi=Math.min(hi,Math.max(u,v));
+   }else if(Math.abs(qy*y-c)>band)continue;
+   const i1=Math.max(0,Math.ceil((lo-x0)/h)),i2=Math.min(nx-1,Math.floor((hi-x0)/h));
+   for(let i=i1;i<=i2;i++){
+    const x=x0+i*h;let t=((x-ax)*dx+(y-ay)*dy)/l2;t=t<0?0:t>1?1:t;
+    const ex=x-ax-t*dx,ey=y-ay-t*dy,d=Math.sqrt(ex*ex+ey*ey),id=j*nx+i;
+    if(d<Math.abs(F[id]))F[id]=M[id]?d:-d;
+   }
+  }
+ }
+ return F;
+}
+// Contours (marching squares) au niveau L du champ F
+function contour(F,g,L){
+ const{x0,y0,nx,ny,h}=g,segs=[];
+ const H=(i,j)=>2*(j*nx+i),V=(i,j)=>2*(j*nx+i)+1;
+ for(let j=0;j<ny-1;j++)for(let i=0;i<nx-1;i++){
+  const a=F[j*nx+i]-L,b=F[j*nx+i+1]-L,c=F[(j+1)*nx+i+1]-L,d=F[(j+1)*nx+i]-L;
+  const m=(a>=0?1:0)|(b>=0?2:0)|(c>=0?4:0)|(d>=0?8:0);
+  if(m===0||m===15)continue;
+  const e0=H(i,j),e1=V(i+1,j),e2=H(i,j+1),e3=V(i,j);
+  switch(m){
+   case 1:case 14:segs.push([e0,e3]);break;
+   case 2:case 13:segs.push([e0,e1]);break;
+   case 4:case 11:segs.push([e1,e2]);break;
+   case 8:case 7:segs.push([e2,e3]);break;
+   case 3:case 12:segs.push([e1,e3]);break;
+   case 6:case 9:segs.push([e0,e2]);break;
+   case 5:if((a+b+c+d)>=0)segs.push([e0,e1],[e2,e3]);else segs.push([e0,e3],[e1,e2]);break;
+   case 10:if((a+b+c+d)>=0)segs.push([e0,e3],[e1,e2]);else segs.push([e0,e1],[e2,e3]);break;
+  }
+ }
+ const pt=id=>{
+  const v=id&1,k=id>>1,j=Math.floor(k/nx),i=k-j*nx;
+  if(!v){const f0=F[j*nx+i],f1=F[j*nx+i+1],t=(L-f0)/(f1-f0);return[x0+(i+t)*h,y0+j*h];}
+  const f0=F[j*nx+i],f1=F[(j+1)*nx+i],t=(L-f0)/(f1-f0);return[x0+i*h,y0+(j+t)*h];
+ };
+ const adj=new Map();
+ segs.forEach((s,k)=>{for(const id of s){let l=adj.get(id);if(!l)adj.set(id,l=[]);l.push(k);}});
+ const used=new Uint8Array(segs.length),loops=[];
+ for(let k0=0;k0<segs.length;k0++){
+  if(used[k0])continue;
+  used[k0]=1;const ids=[segs[k0][0]];let next=segs[k0][1];
+  for(;;){
+   ids.push(next);
+   let nk=-1;for(const q of adj.get(next))if(!used[q]){nk=q;break;}
+   if(nk<0)break;
+   used[nk]=1;const s=segs[nk];next=s[0]===next?s[1]:s[0];
+  }
+  if(ids.length>3&&ids[0]===ids[ids.length-1]){ids.pop();loops.push(ids.map(pt));}
+ }
+ return loops;
+}
+function rdp(P,tol){
+ if(P.length<3)return P;
+ const a=P[0],b=P[P.length-1],dx=b[0]-a[0],dy=b[1]-a[1],l=Math.hypot(dx,dy)||1e-12;
+ let dm=0,im=0;
+ for(let i=1;i<P.length-1;i++){const d=Math.abs((P[i][0]-a[0])*dy-(P[i][1]-a[1])*dx)/l;if(d>dm){dm=d;im=i;}}
+ if(dm<=tol)return[a,b];
+ return rdp(P.slice(0,im+1),tol).slice(0,-1).concat(rdp(P.slice(im),tol));
+}
+function simp(P,tol){
+ const n=P.length;if(n<5)return P;
+ let k=0,dm=0;
+ for(let i=1;i<n;i++){const d=Math.hypot(P[i][0]-P[0][0],P[i][1]-P[0][1]);if(d>dm){dm=d;k=i;}}
+ const A=rdp(P.slice(0,k+1),tol),B=rdp(P.slice(k).concat([P[0]]),tol);
+ return A.slice(0,-1).concat(B.slice(0,-1));
+}
+// Décalage d'un ensemble de contours : d>0 vers l'intérieur, d<0 vers l'extérieur (angles arrondis)
+function offsetSet(loops,d,h){
+ let x1=1e18,y1=1e18,x2=-1e18,y2=-1e18;
+ loops.forEach(P=>P.forEach(p=>{x1=Math.min(x1,p[0]);x2=Math.max(x2,p[0]);y1=Math.min(y1,p[1]);y2=Math.max(y2,p[1]);}));
+ if(x1>x2)return[];
+ const ex=(d<0?-d:0)+3*h,band=Math.abs(d)+4*h;
+ const g={x0:x1-ex,y0:y1-ex,h,nx:Math.ceil((x2-x1+2*ex)/h)+2,ny:Math.ceil((y2-y1+2*ex)/h)+2};
+ return contour(sdf(loops,g,band),g,d).map(P=>simp(P,h/20)).filter(P=>P.length>=3&&Math.abs(area(P))>4*h*h);
+}
+// Forme usinable : angles saillants arrondis (ouverture) puis angles rentrants arrondis (fermeture), rayon r
+function mach(A,r,h){
+ let X=offsetSet(offsetSet([A],r,h),-r,h);
+ return offsetSet(offsetSet(X,-r,h),r,h);
+}
+// Contour d'une poche (outil à l'intérieur) décalé de s depuis la poche racine "root" ; rayon d'angle mini r
+function offsetPocket(Am,d,root,r,h,cache){
+ const s=d-root,rho=Math.max(r-s,0),a=root+s+rho,k='E'+a.toFixed(4);
+ let F=cache.get(k);if(!F){F=offsetSet(Am,a,h);cache.set(k,F);}
+ return rho>0&&F.length?offsetSet(F,-rho,h):F;
+}
+function arcPts(p1,p2,b){
+ if(!b)return[p1];
+ const dx=p2[0]-p1[0],dy=p2[1]-p1[1],d=Math.hypot(dx,dy);
+ if(d===0)return[p1];
+ const th=4*Math.atan(b),k=(d/2)*((1-b*b)/(2*b));
+ const cx=(p1[0]+p2[0])/2-dy/d*k,cy=(p1[1]+p2[1])/2+dx/d*k;
+ const a1=Math.atan2(p1[1]-cy,p1[0]-cx),R=Math.hypot(p1[0]-cx,p1[1]-cy),n=Math.max(2,Math.ceil(Math.abs(th)/(Math.PI/45))),out=[];
+ for(let i=0;i<n;i++){const a=a1+th*i/n;out.push([cx+R*Math.cos(a),cy+R*Math.sin(a)]);}
+ return out;
+}
+function parseDXF(txt){
+ const T=txt.split(/\r?\n/),G=[];
+ for(let i=0;i+1<T.length;i+=2)G.push([T[i].trim(),T[i+1].trim()]);
+ let s=-1;
+ for(let i=0;i<G.length;i++)if(G[i][0]==='2'&&G[i][1]==='ENTITIES'){s=i+1;break;}
+ if(s<0)return{err:'Section ENTITIES introuvable : fichier DXF non reconnu'};
+ const ents=[],KN=['POLYLINE','LWPOLYLINE','LINE','ARC','CIRCLE','SPLINE','ELLIPSE'];
+ let cur=null,pv=null;
+ for(let i=s;i<G.length;i++){
+  const c=G[i][0],v=G[i][1];
+  if(c==='0'){
+   if(v==='ENDSEC')break;
+   if(v==='VERTEX'&&cur&&cur.t==='POLYLINE'){pv={x:0,y:0,b:0};cur.v.push(pv);continue;}
+   pv=null;
+   if(v==='SEQEND'){cur=null;continue;}
+   if(KN.includes(v)){cur={t:v,v:[],f:0,d:{}};ents.push(cur);}else cur=null;
+   continue;
+  }
+  if(!cur)continue;
+  const n=parseFloat(v);
+  if(cur.t==='POLYLINE'){
+   if(pv){if(c==='10')pv.x=n;else if(c==='20')pv.y=n;else if(c==='42')pv.b=n;}
+   else if(c==='70')cur.f=n;
+  }else if(cur.t==='LWPOLYLINE'){
+   const q=cur.v[cur.v.length-1];
+   if(c==='10')cur.v.push({x:n,y:0,b:0});else if(c==='20'&&q)q.y=n;else if(c==='42'&&q)q.b=n;else if(c==='70')cur.f=n;
+  }else cur.d[c]=n;
+ }
+ const closed=[],pieces=[];let spl=0,open=0;
+ for(const E of ents){
+  if(E.t==='POLYLINE'||E.t==='LWPOLYLINE'){
+   const v=E.v.map(q=>[q.x,q.y]),bs=E.v.map(q=>q.b);let n=v.length;
+   if(n<2)continue;
+   const cl=(E.f&1)===1||(n>2&&Math.hypot(v[0][0]-v[n-1][0],v[0][1]-v[n-1][1])<1e-6*(1+Math.abs(v[0][0])));
+   if(cl&&Math.hypot(v[0][0]-v[n-1][0],v[0][1]-v[n-1][1])<1e-6*(1+Math.abs(v[0][0]))){v.pop();bs.pop();n--;}
+   let pts=[];
+   for(let k=0;k<(cl?n:n-1);k++)pts=pts.concat(arcPts(v[k],v[(k+1)%n],bs[k]));
+   if(!cl)pts.push(v[n-1]);
+   (cl?closed:pieces).push(pts);
+  }else if(E.t==='LINE')pieces.push([[E.d[10],E.d[20]],[E.d[11],E.d[21]]]);
+  else if(E.t==='ARC'||E.t==='CIRCLE'){
+   const cx=E.d[10],cy=E.d[20],r=E.d[40],full=E.t==='CIRCLE';
+   let a1=full?0:E.d[50]*Math.PI/180,a2=full?2*Math.PI:E.d[51]*Math.PI/180;
+   if(a2<=a1)a2+=2*Math.PI;
+   const N=Math.max(4,Math.ceil((a2-a1)/(Math.PI/90))),pts=[];
+   for(let i=0;i<=N;i++){const a=a1+(a2-a1)*i/N;pts.push([cx+r*Math.cos(a),cy+r*Math.sin(a)]);}
+   if(full){pts.pop();closed.push(pts);}else pieces.push(pts);
+  }else spl++;
+ }
+ let ext=0;
+ closed.concat(pieces).forEach(P=>P.forEach(p=>{ext=Math.max(ext,Math.abs(p[0]),Math.abs(p[1]));}));
+ const tol=1e-4*(ext||1),dd=(a,b)=>Math.hypot(a[0]-b[0],a[1]-b[1]),pcs=pieces.map(p=>p.slice());
+ while(pcs.length){
+  let c=pcs.pop(),again=true;
+  while(again){
+   again=false;
+   for(let i=0;i<pcs.length;i++){
+    const p=pcs[i],cs=c[0],ce=c[c.length-1],ps=p[0],pe=p[p.length-1];
+    if(dd(ce,ps)<tol)c=c.concat(p.slice(1));
+    else if(dd(ce,pe)<tol)c=c.concat(p.slice(0,-1).reverse());
+    else if(dd(cs,pe)<tol)c=p.slice(0,-1).concat(c);
+    else if(dd(cs,ps)<tol)c=p.slice(1).reverse().concat(c);
+    else continue;
+    pcs.splice(i,1);again=true;break;
+   }
+  }
+  if(c.length>3&&dd(c[0],c[c.length-1])<tol){c.pop();closed.push(c);}else open++;
+ }
+ const loops=closed.filter(P=>P.length>=3&&Math.abs(area(P))>0);
+ if(!loops.length)return{err:'Aucun contour fermé trouvé (il faut des polylignes fermées, ou des traits et arcs qui se rejoignent)'};
+ loops.sort((a,b)=>Math.abs(area(b))-Math.abs(area(a)));
+ const pts=loops[0];
+ let x1=1e18,y1=1e18,x2=-1e18,y2=-1e18;
+ pts.forEach(p=>{x1=Math.min(x1,p[0]);x2=Math.max(x2,p[0]);y1=Math.min(y1,p[1]);y2=Math.max(y2,p[1]);});
+ const ign=loops.length-1+open+spl;
+ return{cust:{pts,x0:x1,y0:y1,w:x2-x1,h:y2-y1},
+  info:`Contour de ${pts.length} points (${+(x2-x1).toFixed(1)} × ${+(y2-y1).toFixed(1)} unités)`+(ign?` — ${ign} élément(s) ignoré(s) (autres contours, traits ouverts ou splines)`:'')};
+}
+// Contours calculés (mm) de chaque couche pour la forme DXF importée
+function customGeom(p,lid){
+ if(!CUST)return[];
+ try{
+  const r=p.ct/2,h=Math.max(p.L,p.W)/700,key=p.L+'|'+r;
+  if(CUST.key!==key){
+   const sc=p.L/CUST.w,A=CUST.pts.map(q=>[(q[0]-CUST.x0)*sc,(q[1]-CUST.y0)*sc]);
+   CUST.key=key;CUST.cache=new Map();CUST.Am=r>0?mach(A,r,h):[A];
+  }
+  if(CUST.cache.size>200)CUST.cache.clear();
+  return spec(p,lid).map(([d,lay,root])=>{
+   const k=lay+'|'+d.toFixed(4)+'|'+root;let v=CUST.cache.get(k);
+   if(!v){
+    v=(root==null||r<=0)?(d===0?CUST.Am:offsetSet(CUST.Am,d,h)):offsetPocket(CUST.Am,d,root,r,h,CUST.cache);
+    CUST.cache.set(k,v);
+   }
+   return[lay,v];
+  });
+ }catch(err){console.warn('Forme DXF :',err);return[];}
+}
 const IDS=['shape','fitType','dL','dW','dH','ratio','ep','bn','ct','cs','gW','gD','gap'];
 IDS.forEach(id=>$(id).addEventListener('input',update));
+$('dxfFile').addEventListener('change',ev=>{
+ const f=ev.target.files[0];if(!f)return;
+ const rd=new FileReader();
+ rd.onload=()=>{const r=parseDXF(String(rd.result));CUST=r.err?null:r.cust;$('dxfInfo').textContent=r.err||r.info;update();};
+ rd.readAsText(f);
+});
 
 function gp(){
  const n=(id,d)=>+$(id).value||d;
@@ -278,24 +516,27 @@ function updateFitPicto(){
 // Contours de chaque pièce : [décalage depuis le bord extérieur, couche]
 function spec(p,lid){
  const{e,gW,gap,bn,fitType:f}=p;
+ // [décalage depuis le bord extérieur, couche, racine de poche (pour les formes DXF)]
  if(!lid){
-  const s=[[0,'CONTOUR_EXT'],[e,'CAVITE_INT'],[e+bn/2,'FOND_BALLNOSE']];
-  if(f==='shext')s.push([gW,'RAINURE_INT']);
-  if(f==='shint')s.push([e-gW,'RAINURE_EXT']);
+  const s=[[0,'CONTOUR_EXT'],[e,'CAVITE_INT',e],[e+bn/2,'FOND_BALLNOSE',e]];
+  if(f==='shext')s.push([gW+gap,'RAINURE_INT',gW+gap]);
+  if(f==='shint')s.push([e-gW,'RAINURE_EXT',e-gW]);
   return s;
  }
  if(f==='overlay')return[[-(gW+gap),'CONTOUR_EXT'],[-gap,'RAINURE_INT']];
- if(f==='inner')return[[0,'CONTOUR_EXT'],[e+gap,'RAINURE_INT']];
- if(f==='shext')return[[0,'CONTOUR_EXT'],[gW-gap,'RAINURE_INT']];
- return[[0,'CONTOUR_EXT'],[e-gW+gap,'RAINURE_INT']];
+ if(f==='inner')return[[0,'CONTOUR_EXT'],[e+gap,'RAINURE_INT',e]];
+ if(f==='shext')return[[0,'CONTOUR_EXT'],[gW,'RAINURE_INT',gW+gap]];
+ return[[0,'CONTOUR_EXT'],[e-gW+gap,'RAINURE_INT',e-gW]];
 }
 
 function update(){
  const p=gp();
  updateFitPicto();
- const rect=p.shape==='rect';
+ if(p.shape==='custom'&&CUST)p.W=p.L*CUST.h/CUST.w;
+ const rect=p.shape==='rect',cust=p.shape==='custom';
+ $('fcust').style.display=cust?'':'none';
  $('fw2').style.display=rect?'':'none';
- $('lbl1').textContent=p.shape==='round'?'Diamètre (D)':p.shape==='hex'?'Diamètre pointe-à-pointe (D)':'Longueur (L)';
+ $('lbl1').textContent=p.shape==='round'?'Diamètre (D)':p.shape==='hex'?'Diamètre pointe-à-pointe (D)':cust?'Largeur de la forme (L)':'Longueur (L)';
  const hB=Math.round(p.H*p.rat/100*10)/10;
  const hL=Math.round((p.H-hB)*10)/10;
  p.hB=hB;p.hL=hL;
@@ -305,7 +546,7 @@ function update(){
  const fitDesc={
   overlay:"Recouvrement extérieur : le couvercle, plus grand que la base, a une jupe qui l'enveloppe par l'extérieur — poche usinée dans sa face intérieure.",
   inner:"Recouvrement interne : le couvercle, de même contour que la base, a un tenon plein qui s'insère dans la cavité de la base.",
-  shext:"Épaulement externe : feuillure usinée sur le bord extérieur de la base — le couvercle a une jupe qui s'y loge et affleure l'extérieur.",
+  shext:"Épaulement externe : feuillure sur le bord extérieur de la base ; le couvercle a une lèvre (= épaulement, gW) qui s'y pose, jointive, avec le jeu sur le côté et au-dessus.",
   shint:"Épaulement interne : feuillure usinée sur le bord intérieur de la base — le couvercle a un tenon plein qui s'y pose."
  };
  $('fitCalc').innerHTML=
@@ -318,13 +559,17 @@ ${fitDesc[p.fitType]||''}`;
  if(p.bn>p.e-0.5)warns.push(`Ball-nose Ø${p.bn}mm trop grand pour paroi ${p.e}mm`);
  if(p.hL<p.gD+2)warns.push(`Couvercle ${p.hL}mm trop bas pour rainure ${p.gD}mm`);
  const rMax=rect?Math.min(p.L,p.W)/2:p.shape==='hex'?p.L/2/HK:p.L/2;
- if(rMax<=p.e)warns.push('Paroi trop épaisse : plus de cavité intérieure');
+ if(!cust&&rMax<=p.e)warns.push('Paroi trop épaisse : plus de cavité intérieure');
+ if(cust){
+  if(!CUST)warns.push('Importer un fichier DXF pour la forme personnalisée');
+  else{const cv=customGeom(p,false).find(x=>x[0]==='CAVITE_INT');if(cv&&!cv[1].length)warns.push('Cavité vide : paroi trop épaisse pour cette forme');}
+ }
  $('warns').innerHTML=warns.map(w=>`<div class="warn">⚠ ${w}</div>`).join('');
  const iL=rect?+(p.L-2*p.e).toFixed(1):'—';
  const iW=rect?+(p.W-2*p.e).toFixed(1):'—';
  $('psum').innerHTML=`
 <div class="mv"><div class="ml">Int. L/D</div><div class="mn">${iL} mm</div></div>
-<div class="mv"><div class="ml">Int. l</div><div class="mn">${rect?iW+' mm':'= L int.'}</div></div>
+<div class="mv"><div class="ml">Int. l</div><div class="mn">${rect?iW+' mm':'—'}</div></div>
 <div class="mv"><div class="ml">Haut. base</div><div class="mn">${hB} mm</div></div>
 <div class="mv"><div class="ml">Haut. couvercle</div><div class="mn">${hL} mm</div></div>
 <div class="mv"><div class="ml">Déport fond</div><div class="mn">${+(p.bn/2).toFixed(2)} mm</div></div>
@@ -345,10 +590,15 @@ const STY={
 function draw(id,p,lid){
  const cv=$(id),CW=cv.width,CH=cv.height,ctx=cv.getContext('2d'),pad=28;
  ctx.clearRect(0,0,CW,CH);
- const rect=p.shape==='rect',d1=p.L,d2=rect?p.W:p.L,R=p.L/2;
+ const rect=p.shape==='rect',cust=p.shape==='custom',d1=p.L,d2=(rect||cust)?p.W:p.L,R=p.L/2;
  const sc=Math.min((CW-2*pad)/d1,(CH-2*pad)/d2);
  const ox=pad+(CW-2*pad-d1*sc)/2,oy=pad+(CH-2*pad-d2*sc)/2;
- spec(p,lid).forEach(([d,lay])=>{
+ if(cust){
+  customGeom(p,lid).forEach(([lay,loops])=>{
+   const[col,lw,dash]=STY[lay];ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.setLineDash(dash||[]);
+   loops.forEach(P=>{ctx.beginPath();P.forEach((q,k)=>{const X=ox+q[0]*sc,Y=oy+(p.W-q[1])*sc;if(k)ctx.lineTo(X,Y);else ctx.moveTo(X,Y);});ctx.closePath();ctx.stroke();});
+  });
+ }else spec(p,lid).forEach(([d,lay])=>{
   const[col,lw,dash]=STY[lay];
   ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.setLineDash(dash||[]);ctx.beginPath();
   if(rect){
@@ -371,7 +621,7 @@ function draw(id,p,lid){
   ctx.stroke();
  });
  ctx.setLineDash([]);ctx.font='10px system-ui';ctx.fillStyle='#888';
- ctx.fillText(lid?'Couvercle':(rect?`L=${p.L} l=${p.W}`:`D/S=${p.L}`),ox+4,oy-6);
+ ctx.fillText(lid?'Couvercle':(rect||cust?`L=${p.L} l=${+p.W.toFixed(1)}`:`D/S=${p.L}`),ox+4,oy-6);
 }
 
 // ── DXF (AC1009 / R12) ──────────────────────────────────────────────────────
@@ -405,7 +655,9 @@ function hexDXF(cx,cy,R,lay){
 }
 function buildDXF(p,lid){
  const R=p.L/2,sp=spec(p,lid),sh=Math.max(0,-Math.min(...sp.map(s=>s[0])));let body='';
- sp.forEach(([d,lay])=>{
+ if(p.shape==='custom'){
+  customGeom(p,lid).forEach(([lay,loops])=>loops.forEach(P=>{for(let k=0;k<P.length;k++){const a=P[k],b=P[(k+1)%P.length];body+=Ln(a[0]+sh,a[1]+sh,b[0]+sh,b[1]+sh,lay);}}));
+ }else sp.forEach(([d,lay])=>{
   if(p.shape==='rect')body+=rectDXF(d+sh,d+sh,p.L-2*d,p.W-2*d,lay);
   else if(p.shape==='round'){if(R-d>0)body+=Ci(0,0,R-d,lay);}
   else body+=hexDXF(0,0,R-d*HK,lay);
@@ -421,16 +673,16 @@ function genDXF(p){
 
 function genNotice(p){
  const tenonMur=+(p.e-p.gW-p.gap).toFixed(2);
- const shape=p.shape==='rect'?'Rectangulaire':p.shape==='round'?'Ronde':'Hexagonale';
+ const shape=p.shape==='rect'?'Rectangulaire':p.shape==='round'?'Ronde':p.shape==='custom'?'Personnalisée (DXF)':'Hexagonale';
  const fit={overlay:'Recouvrement extérieur',inner:'Recouvrement interne',shext:'Épaulement externe',shint:'Épaulement interne'}[p.fitType]||p.fitType;
  $('notTxt').textContent=
 `NOTICE D'UTILISATION — DwgBox v1.0
 ====================================
 https://chtipanda.github.io/dxfbox/
 
-Forme : ${shape}
+Forme : ${shape}${p.shape==='custom'?` — angles arrondis au rayon de fraise (${+(p.ct/2).toFixed(2)} mm)`:''}
 Emboîtement : ${fit}
-Dimensions : ${p.L} × ${p.shape==='rect'?p.W:p.L} × ${p.H} mm
+Dimensions : ${p.L} × ${p.shape==='rect'||p.shape==='custom'?+p.W.toFixed(1):p.L} × ${p.H} mm
 Épaisseur : ${p.e} mm
 
 CALCUL EMBOITEMENT
@@ -480,9 +732,10 @@ Poche RAINURE_INT, prof. ${p.gD}mm : jupe de ${p.gW} mm autour de la base, jeu $
 
 `:''}${p.fitType==='shext'?`ÉPAULEMENT EXTERNE
 -------------------
-Base : feuillure RAINURE_INT, à l'extérieur de la ligne, prof. ${p.gD}mm
-Couvercle : poche RAINURE_INT, à l'intérieur de la ligne, prof. ${p.gD}mm
-Jupe du couvercle : ${+(p.gW-p.gap).toFixed(2)} mm
+Base : feuillure RAINURE_INT (largeur ${+(p.gW+p.gap).toFixed(2)} mm), à l'extérieur de la ligne, prof. ${p.gD}mm
+Couvercle : poche RAINURE_INT, à l'intérieur de la ligne, prof. ${+(p.gD+p.gap).toFixed(2)}mm
+Lèvre du couvercle = épaulement = ${p.gW} mm, posée sur la feuillure
+Jeu ${p.gap} mm : sur le côté de la lèvre et au-dessus de la base
 
 `:''}LOGICIELS
 ---------
