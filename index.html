@@ -53,441 +53,466 @@ button:hover{background:#e8e6e0}
 button.p{border-color:#185FA5;color:#fff;background:#185FA5}
 button.p:hover{background:#0C447C}
 .notice{font-family:'Courier New',monospace;font-size:11px;line-height:1.7;color:#333;background:#f9f8f5;border:1px solid #ddd;border-radius:5px;padding:12px;max-height:280px;overflow-y:auto;white-space:pre;margin-top:6px}
+#fitPicto{margin-top:10px;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.pk{text-align:center;opacity:.35;transition:opacity .2s}
+.pk.on{opacity:1}
+.pk svg{display:block;width:100%;max-width:120px;margin:0 auto}
+.pk b{display:block;font-size:10px;color:#185FA5;margin-top:2px}
+.pk i{display:block;font-style:normal;font-size:9px;color:#777;line-height:1.3}
+.pb{fill:none;stroke:#185FA5;stroke-width:2}
+.pg{fill:none;stroke:#555;stroke-width:2}
+.pd{fill:none;stroke:#0F6E56;stroke-width:1.2;stroke-dasharray:3 2}
+.pj{fill:none;stroke:#E04;stroke-width:.8}
+.pt{font:600 6.5px system-ui}
+.ps{font:5.5px system-ui}
 @media(max-width:700px){
-  .layout{grid-template-columns:1fr;height:auto}
-  .panel{border-right:none;border-bottom:1px solid #ddd}
-  .psum{grid-template-columns:repeat(2,1fr)}
-  .pcv{grid-template-columns:1fr}
+.layout{grid-template-columns:1fr;height:auto}
+.panel{border-right:none;border-bottom:1px solid #ddd}
+.psum{grid-template-columns:repeat(2,1fr)}
+.pcv{grid-template-columns:1fr}
 }
 </style>
 </head>
 <body>
 <header>
-  <svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="2" y="2" width="24" height="24" rx="4" fill="#fff3"/><path d="M6 22V8l8-4 8 4v14" stroke="#fff" stroke-width="1.5" fill="none"/><rect x="10" y="14" width="8" height="8" rx="1" fill="#fff5"/></svg>
-  <h1>DwgBox <span>Générateur Boîte CNC — DXF Paramétrique</span></h1>
-  <div id="offlineBadge">📶 Hors ligne</div>
+<svg width="28" height="28" viewBox="0 0 28 28" fill="none"><rect x="2" y="2" width="24" height="24" rx="4" fill="#fff3"/><path d="M6 22V8l8-4 8 4v14" stroke="#fff" stroke-width="1.5" fill="none"/><rect x="10" y="14" width="8" height="8" rx="1" fill="#fff5"/></svg>
+<h1>DwgBox <span>Générateur Boîte CNC — DXF Paramétrique</span></h1>
+<div id="offlineBadge">📶 Hors ligne</div>
 </header>
-
 <div class="layout">
 <div class="panel">
 
-  <div class="section">
-    <div class="stitle">Forme &amp; emboîtement</div>
-    <div class="sbody">
-      <div class="g2">
-        <div class="f"><label>Forme</label>
-          <select id="shape">
-            <option value="rect">Rectangulaire</option>
-            <option value="round">Ronde (cercle)</option>
-            <option value="hex">Hexagonale</option>
-          </select>
-        </div>
-        <div class="f"><label>Emboîtement</label>
-          <select id="fitType">
-            <option value="overlay">Recouvrement</option>
-            <option value="inner">Intérieur</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="stitle">Dimensions extérieures (mm)</div>
-    <div class="sbody">
-      <div class="g3">
-        <div class="f"><label id="lbl1">Longueur (L)</label><input type="number" id="dL" value="80" min="20" max="500" step="1"></div>
-        <div class="f" id="fw2"><label>Largeur (l)</label><input type="number" id="dW" value="60" min="20" max="500" step="1"></div>
-        <div class="f"><label>Hauteur (H)</label><input type="number" id="dH" value="40" min="10" max="300" step="1"></div>
-      </div>
-      <div style="margin-top:10px">
-        <div class="f">
-          <label>Ratio base / couvercle — <span id="ratioHint" style="color:#185FA5;font-weight:600"></span></label>
-          <input type="range" id="ratio" min="20" max="80" value="70" step="5">
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="stitle">Matière &amp; outil</div>
-    <div class="sbody">
-      <div class="g2">
-        <div class="f"><label>Épaisseur paroi (e)</label><input type="number" id="ep" value="6" min="3" max="30" step="0.5"></div>
-        <div class="f"><label>Ø ball-nose fond</label><input type="number" id="bn" value="3" min="1" max="12" step="0.5"><span class="hint">Déport = Ø/2 vers int.</span></div>
-      </div>
-      <div class="g2" style="margin-top:8px">
-        <div class="f"><label>Ø fraise contour</label><input type="number" id="ct" value="6" min="1" max="20" step="0.5"></div>
-        <div class="f"><label>Côté découpe</label>
-          <select id="cs">
-            <option value="outside">Extérieur (G)</option>
-            <option value="inside">Intérieur (D)</option>
-            <option value="online">Sur la ligne</option>
-          </select>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="stitle">Rainure &amp; jeu fonctionnel</div>
-    <div class="sbody">
-      <div class="g3">
-        <div class="f"><label>Largeur rainure</label><input type="number" id="gW" value="3" min="0.5" max="15" step="0.5"><span class="hint">Dans la paroi</span></div>
-        <div class="f"><label>Profondeur rainure</label><input type="number" id="gD" value="4" min="1" max="20" step="0.5"></div>
-        <div class="f"><label>Jeu fonctionnel</label><input type="number" id="gap" value="0.2" min="0" max="2" step="0.05"><span class="hint">Sur le tenon</span></div>
-      </div>
-      <div class="fitcalc" id="fitCalc"></div>
-      <div id="warns"></div>
-    </div>
-  </div>
-
+<div class="section">
+<div class="stitle">Forme &amp; emboîtement</div>
+<div class="sbody">
+<div class="g2">
+<div class="f"><label>Forme</label>
+<select id="shape">
+<option value="rect">Rectangulaire</option>
+<option value="round">Ronde (cercle)</option>
+<option value="hex">Hexagonale</option>
+</select></div>
+<div class="f"><label>Emboîtement</label>
+<select id="fitType" onchange="updateFitPicto()">
+<option value="overlay">Recouvrement extérieur</option>
+<option value="inner">Recouvrement interne</option>
+<option value="shext">Épaulement externe</option>
+<option value="shint">Épaulement interne</option>
+</select></div>
 </div>
 
+<div id="fitPicto">
+<div class="pk" id="picto-overlay">
+<svg viewBox="0 0 100 80"><defs><marker id="ar" markerWidth="4" markerHeight="4" refX="3" refY="2" orient="auto"><path d="M0,0 L4,2 L0,4Z" fill="#E04"/></marker></defs>
+<path class="pb" d="M80 8H12V34H19V20H80"/>
+<path class="pg" d="M80 72H20V21H33"/>
+<path class="pd" d="M33 21V64H80"/>
+<text class="pt" x="40" y="17" fill="#185FA5">COUVERCLE</text>
+<text class="pt" x="52" y="46" fill="#555">BASE</text>
+<path class="pj" d="M9 41L19.5 29"/>
+<text class="ps" x="1" y="45" fill="#E04">jeu</text></svg>
+<b>Recouvrement extérieur</b><i>Couvercle à jupe qui enveloppe<br>la base par l'extérieur</i></div>
+
+<div class="pk" id="picto-inner">
+<svg viewBox="0 0 100 80">
+<path class="pb" d="M80 8H20V20H34V30H80"/>
+<path class="pg" d="M80 72H20V21H33"/>
+<path class="pd" d="M33 21V64H80"/>
+<text class="pt" x="40" y="17" fill="#185FA5">COUVERCLE</text>
+<text class="ps" x="60" y="27.5" fill="#185FA5">tenon</text>
+<text class="pt" x="52" y="50" fill="#555">BASE</text>
+<path class="pj" d="M46 25L34.5 25"/>
+<text class="ps" x="47" y="27.5" fill="#E04">jeu</text></svg>
+<b>Recouvrement interne</b><i>Tenon plein du couvercle<br>dans la cavité de la base</i></div>
+
+<div class="pk" id="picto-shext">
+<svg viewBox="0 0 100 80">
+<path class="pb" d="M80 8H20V39H31V17H80"/>
+<path class="pg" d="M80 72H20V40H32V18H44"/>
+<path class="pd" d="M44 18V72"/>
+<text class="pt" x="48" y="15" fill="#185FA5">COUVERCLE</text>
+<text class="pt" x="62" y="58" fill="#555">BASE</text>
+<path class="pj" style="stroke:#D85A30" d="M47 33L33 41"/>
+<text class="ps" x="48" y="35" fill="#D85A30">épaulement</text>
+<line class="pj" x1="25" y1="49" x2="25" y2="41" marker-end="url(#ar)"/>
+<text class="ps" x="27" y="51" fill="#E04">jeu</text></svg>
+<b>Épaulement externe</b><i>Feuillure sur le bord ext. de la base,<br>couvercle à jupe qui affleure</i></div>
+
+<div class="pk" id="picto-shint">
+<svg viewBox="0 0 100 80">
+<path class="pb" d="M80 8H20V20H34V30H80"/>
+<path class="pg" d="M80 72H20V21H33V31H44"/>
+<path class="pd" d="M44 31V64H80"/>
+<text class="pt" x="40" y="17" fill="#185FA5">COUVERCLE</text>
+<text class="pt" x="52" y="58" fill="#555">BASE</text>
+<path class="pj" style="stroke:#D85A30" d="M46 43L38 33"/>
+<text class="ps" x="47" y="46" fill="#D85A30">épaulement</text>
+<path class="pj" d="M46 25L34.5 25"/>
+<text class="ps" x="47" y="27.5" fill="#E04">jeu</text></svg>
+<b>Épaulement interne</b><i>Feuillure sur le bord int. de la base,<br>couvercle à tenon qui s'y pose</i></div>
+</div>
+</div>
+</div>
+
+<div class="section">
+<div class="stitle">Dimensions extérieures (mm)</div>
+<div class="sbody">
+<div class="g3">
+<div class="f"><label id="lbl1">Longueur (L)</label><input type="number" id="dL" value="80" min="20" max="500" step="1"></div>
+<div class="f" id="fw2"><label>Largeur (l)</label><input type="number" id="dW" value="60" min="20" max="500" step="1"></div>
+<div class="f"><label>Hauteur (H)</label><input type="number" id="dH" value="40" min="10" max="300" step="1"></div>
+</div>
+<div style="margin-top:10px"><div class="f">
+<label>Ratio base / couvercle — <span id="ratioHint" style="color:#185FA5;font-weight:600"></span></label>
+<input type="range" id="ratio" min="20" max="80" value="70" step="5">
+</div></div>
+</div>
+</div>
+
+<div class="section">
+<div class="stitle">Matière &amp; outil</div>
+<div class="sbody">
+<div class="g2">
+<div class="f"><label>Épaisseur paroi (e)</label><input type="number" id="ep" value="6" min="3" max="30" step="0.5"></div>
+<div class="f"><label>Ø ball-nose fond</label><input type="number" id="bn" value="3" min="1" max="12" step="0.5"><span class="hint">Déport = Ø/2 vers int.</span></div>
+</div>
+<div class="g2" style="margin-top:8px">
+<div class="f"><label>Ø fraise contour</label><input type="number" id="ct" value="6" min="1" max="20" step="0.5"></div>
+<div class="f"><label>Côté découpe</label>
+<select id="cs">
+<option value="outside">Extérieur (G)</option>
+<option value="inside">Intérieur (D)</option>
+<option value="online">Sur la ligne</option>
+</select></div>
+</div>
+</div>
+</div>
+
+<div class="section">
+<div class="stitle">Rainure &amp; jeu fonctionnel</div>
+<div class="sbody">
+<div class="g3">
+<div class="f"><label>Largeur rainure</label><input type="number" id="gW" value="3" min="0.5" max="15" step="0.5"><span class="hint">Dans la paroi</span></div>
+<div class="f"><label>Profondeur rainure</label><input type="number" id="gD" value="4" min="1" max="20" step="0.5"></div>
+<div class="f"><label>Jeu fonctionnel</label><input type="number" id="gap" value="0.2" min="0" max="2" step="0.05"><span class="hint">Sur le tenon</span></div>
+</div>
+<div class="fitcalc" id="fitCalc"></div>
+<div id="warns"></div>
+</div>
+</div>
+
+</div>
 <div class="main">
 
-  <div class="section">
-    <div class="stitle">Aperçu</div>
-    <div class="sbody">
-      <div class="pcv">
-        <div><div class="cvlabel">Base (vue dessus)</div><canvas id="cvB" width="280" height="190"></canvas></div>
-        <div><div class="cvlabel">Couvercle (vue dessus)</div><canvas id="cvL" width="280" height="190"></canvas></div>
-      </div>
-      <div class="legend">
-        <div class="leg"><div class="legline" style="background:#185FA5"></div>Contour ext.</div>
-        <div class="leg"><div class="legline" style="background:#0F6E56"></div>Cavité int.</div>
-        <div class="leg"><div class="legline" style="border-top:2px dashed #BA7517;height:0;width:18px"></div>Fond ball-nose</div>
-        <div class="leg"><div class="legline" style="background:#D85A30"></div>Rainure / tenon</div>
-      </div>
-      <div class="psum" id="psum"></div>
-    </div>
-  </div>
-
-  <div class="section">
-    <div class="stitle">Export DXF</div>
-    <div class="sbody">
-      <div class="tabs">
-        <div class="tab on" id="t-base" onclick="st('base')">Base</div>
-        <div class="tab" id="t-lid" onclick="st('lid')">Couvercle</div>
-        <div class="tab" id="t-notice" onclick="st('notice')">Notice</div>
-      </div>
-      <div id="p-base">
-        <div style="font-size:12px;color:#666">Couches : CONTOUR_EXT / CAVITE_INT / FOND_BALLNOSE</div>
-        <div class="dout" id="dBase"></div>
-        <div class="btnr">
-          <button class="p" onclick="dl('base')">↓ boite_base.dxf</button>
-          <button onclick="cp('base')">Copier</button>
-        </div>
-      </div>
-      <div id="p-lid" style="display:none">
-        <div style="font-size:12px;color:#666">Couches : CONTOUR_EXT / RAINURE_EXT / RAINURE_INT</div>
-        <div class="dout" id="dLid"></div>
-        <div class="btnr">
-          <button class="p" onclick="dl('lid')">↓ boite_couvercle.dxf</button>
-          <button onclick="cp('lid')">Copier</button>
-        </div>
-      </div>
-      <div id="p-notice" style="display:none">
-        <div class="notice" id="notTxt"></div>
-        <div class="btnr"><button onclick="cpNotice()">Copier la notice</button></div>
-      </div>
-    </div>
-  </div>
-
+<div class="section">
+<div class="stitle">Aperçu</div>
+<div class="sbody">
+<div class="pcv">
+<div><div class="cvlabel">Base (vue dessus)</div><canvas id="cvB" width="280" height="190"></canvas></div>
+<div><div class="cvlabel">Couvercle (vue dessus)</div><canvas id="cvL" width="280" height="190"></canvas></div>
+</div>
+<div class="legend">
+<div class="leg"><div class="legline" style="background:#185FA5"></div>Contour ext.</div>
+<div class="leg"><div class="legline" style="background:#0F6E56"></div>Cavité int.</div>
+<div class="leg"><div class="legline" style="border-top:2px dashed #BA7517;height:0;width:18px"></div>Fond ball-nose</div>
+<div class="leg"><div class="legline" style="background:#D85A30"></div>Rainure / tenon</div>
+</div>
+<div class="psum" id="psum"></div>
 </div>
 </div>
 
+<div class="section">
+<div class="stitle">Export DXF</div>
+<div class="sbody">
+<div class="tabs">
+<div class="tab on" id="t-base" onclick="st('base')">Base</div>
+<div class="tab" id="t-lid" onclick="st('lid')">Couvercle</div>
+<div class="tab" id="t-notice" onclick="st('notice')">Notice</div>
+</div>
+<div id="p-base">
+<div style="font-size:12px;color:#666">Couches : CONTOUR_EXT / CAVITE_INT / FOND_BALLNOSE</div>
+<div class="dout" id="dBase"></div>
+<div class="btnr"><button class="p" onclick="dl('base')">↓ boite_base.dxf</button><button onclick="cp('base')">Copier</button></div>
+</div>
+<div id="p-lid" style="display:none">
+<div style="font-size:12px;color:#666">Couches : CONTOUR_EXT / RAINURE_EXT / RAINURE_INT</div>
+<div class="dout" id="dLid"></div>
+<div class="btnr"><button class="p" onclick="dl('lid')">↓ boite_couvercle.dxf</button><button onclick="cp('lid')">Copier</button></div>
+</div>
+<div id="p-notice" style="display:none">
+<div class="notice" id="notTxt"></div>
+<div class="btnr"><button onclick="cpNotice()">Copier la notice</button></div>
+</div>
+</div>
+</div>
+
+</div>
+</div>
 <script>
-// ── Service Worker registration ───────────────────────────────────────────────
+// Service Worker
 if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('sw.js').then(()=>{
-    console.log('SW registered');
-  }).catch(e=>console.warn('SW error',e));
+ navigator.serviceWorker.register('sw.js').then(()=>console.log('SW registered')).catch(e=>console.warn('SW error',e));
 }
-window.addEventListener('online', ()=>{ document.getElementById('offlineBadge').style.display='none'; });
-window.addEventListener('offline',()=>{ document.getElementById('offlineBadge').style.display='block'; });
-if(!navigator.onLine) document.getElementById('offlineBadge').style.display='block';
+const $=id=>document.getElementById(id);
+const badge=()=>{$('offlineBadge').style.display=navigator.onLine?'none':'block';};
+window.addEventListener('online',badge);window.addEventListener('offline',badge);badge();
 
-// ── App ───────────────────────────────────────────────────────────────────────
+// Un hexagone décalé de d (perpendiculairement aux côtés) perd d*2/√3 de rayon
+const HK=2/Math.sqrt(3);
 const IDS=['shape','fitType','dL','dW','dH','ratio','ep','bn','ct','cs','gW','gD','gap'];
-IDS.forEach(id=>document.getElementById(id).addEventListener('input',update));
+IDS.forEach(id=>$(id).addEventListener('input',update));
 
 function gp(){
-  return{
-    shape:document.getElementById('shape').value,
-    fitType:document.getElementById('fitType').value,
-    L:+document.getElementById('dL').value||80,
-    W:+document.getElementById('dW').value||60,
-    H:+document.getElementById('dH').value||40,
-    rat:+document.getElementById('ratio').value||70,
-    e:+document.getElementById('ep').value||6,
-    bn:+document.getElementById('bn').value||3,
-    ct:+document.getElementById('ct').value||6,
-    cs:document.getElementById('cs').value,
-    gW:+document.getElementById('gW').value||3,
-    gD:+document.getElementById('gD').value||4,
-    gap:+document.getElementById('gap').value||0.2
-  };
+ const n=(id,d)=>+$(id).value||d;
+ const g=parseFloat($('gap').value); // 0 est une valeur valide pour le jeu
+ return{shape:$('shape').value,fitType:$('fitType').value,
+  L:n('dL',80),W:n('dW',60),H:n('dH',40),rat:n('ratio',70),
+  e:n('ep',6),bn:n('bn',3),ct:n('ct',6),cs:$('cs').value,
+  gW:n('gW',3),gD:n('gD',4),gap:Number.isFinite(g)?g:0.2};
+}
+function updateFitPicto(){
+ const v=$('fitType').value;
+ ['overlay','inner','shext','shint'].forEach(k=>$('picto-'+k).classList.toggle('on',v===k));
+}
+
+// Contours de chaque pièce : [décalage depuis le bord extérieur, couche]
+function spec(p,lid){
+ const{e,gW,gap,bn,fitType:f}=p;
+ if(!lid){
+  const s=[[0,'CONTOUR_EXT'],[e,'CAVITE_INT'],[e+bn/2,'FOND_BALLNOSE']];
+  if(f==='shext')s.push([gW,'RAINURE_INT']);
+  if(f==='shint')s.push([e-gW,'RAINURE_EXT']);
+  return s;
+ }
+ if(f==='overlay')return[[-(gW+gap),'CONTOUR_EXT'],[-gap,'RAINURE_INT']];
+ if(f==='inner')return[[0,'CONTOUR_EXT'],[e+gap,'RAINURE_INT']];
+ if(f==='shext')return[[0,'CONTOUR_EXT'],[gW-gap,'RAINURE_INT']];
+ return[[0,'CONTOUR_EXT'],[e-gW+gap,'RAINURE_INT']];
 }
 
 function update(){
-  const p=gp();
-  const fw2=document.getElementById('fw2');
-  const lbl1=document.getElementById('lbl1');
-  if(p.shape==='round'){fw2.style.display='none';lbl1.textContent='Diamètre (D)';}
-  else if(p.shape==='hex'){fw2.style.display='none';lbl1.textContent='Côté pointe-à-pointe (S)';}
-  else{fw2.style.display='';lbl1.textContent='Longueur (L)';}
-
-  const hB=Math.round(p.H*p.rat/100*10)/10;
-  const hL=Math.round((p.H-hB)*10)/10;
-  p.hB=hB; p.hL=hL;
-  document.getElementById('ratioHint').textContent=`Base ${hB} mm — Couvercle ${hL} mm`;
-
-  const tenonMur=+(p.e-p.gW-p.gap).toFixed(2);
-  const resteExt=+(p.e-p.gW).toFixed(2);
-  document.getElementById('fitCalc').innerHTML=
-    `Paroi <b>${p.e} mm</b> = rainure <b>${p.gW} mm</b> + reste ext. <b>${resteExt} mm</b><br>
-     Tenon effectif = e − gW − jeu = <b>${tenonMur} mm</b><br>
-     ${p.fitType==='overlay'
-       ?'Recouvrement : couvercle englobe la boîte, rainure dans face intérieure.'
-       :'Intérieur : tenon rentre de '+p.gW+'mm dans la cavité de la base.'}`;
-
-  const warns=[];
-  if(tenonMur<1) warns.push(`Tenon trop mince (${tenonMur} mm) — augmenter e ou réduire gW/jeu`);
-  if(p.gW>=p.e) warns.push(`Rainure (${p.gW}mm) ≥ épaisseur paroi (${p.e}mm) : impossible`);
-  if(p.bn>p.e-0.5) warns.push(`Ball-nose Ø${p.bn}mm trop grand pour paroi ${p.e}mm`);
-  if(p.hL<p.gD+2) warns.push(`Couvercle ${p.hL}mm trop bas pour rainure ${p.gD}mm`);
-  document.getElementById('warns').innerHTML=warns.map(w=>`<div class="warn">⚠ ${w}</div>`).join('');
-
-  const iL=p.shape==='rect'?+(p.L-2*p.e).toFixed(1):'—';
-  const iW=p.shape==='rect'?+(p.W-2*p.e).toFixed(1):'—';
-  document.getElementById('psum').innerHTML=`
-    <div class="mv"><div class="ml">Int. L/D</div><div class="mn">${iL} mm</div></div>
-    <div class="mv"><div class="ml">Int. l</div><div class="mn">${p.shape==='rect'?iW+' mm':'= L int.'}</div></div>
-    <div class="mv"><div class="ml">Haut. base</div><div class="mn">${hB} mm</div></div>
-    <div class="mv"><div class="ml">Haut. couvercle</div><div class="mn">${hL} mm</div></div>
-    <div class="mv"><div class="ml">Déport fond</div><div class="mn">${+(p.bn/2).toFixed(2)} mm</div></div>
-    <div class="mv"><div class="ml">Tenon</div><div class="mn">${tenonMur} mm</div></div>
-    <div class="mv"><div class="ml">Jeu</div><div class="mn">${p.gap} mm</div></div>
-    <div class="mv"><div class="ml">Rainure l×p</div><div class="mn">${p.gW}×${p.gD} mm</div></div>
-  `;
-
-  draw('cvB',p,false);
-  draw('cvL',p,true);
-  genDXF(p);
-  genNotice(p);
+ const p=gp();
+ updateFitPicto();
+ const rect=p.shape==='rect';
+ $('fw2').style.display=rect?'':'none';
+ $('lbl1').textContent=p.shape==='round'?'Diamètre (D)':p.shape==='hex'?'Diamètre pointe-à-pointe (D)':'Longueur (L)';
+ const hB=Math.round(p.H*p.rat/100*10)/10;
+ const hL=Math.round((p.H-hB)*10)/10;
+ p.hB=hB;p.hL=hL;
+ $('ratioHint').textContent=`Base ${hB} mm — Couvercle ${hL} mm`;
+ const tenonMur=+(p.e-p.gW-p.gap).toFixed(2);
+ const resteExt=+(p.e-p.gW).toFixed(2);
+ const fitDesc={
+  overlay:"Recouvrement extérieur : le couvercle, plus grand que la base, a une jupe qui l'enveloppe par l'extérieur — poche usinée dans sa face intérieure.",
+  inner:"Recouvrement interne : le couvercle, de même contour que la base, a un tenon plein qui s'insère dans la cavité de la base.",
+  shext:"Épaulement externe : feuillure usinée sur le bord extérieur de la base — le couvercle a une jupe qui s'y loge et affleure l'extérieur.",
+  shint:"Épaulement interne : feuillure usinée sur le bord intérieur de la base — le couvercle a un tenon plein qui s'y pose."
+ };
+ $('fitCalc').innerHTML=
+  `Paroi <b>${p.e} mm</b> = rainure <b>${p.gW} mm</b> + reste ext. <b>${resteExt} mm</b><br>
+Tenon effectif = e − gW − jeu = <b>${tenonMur} mm</b><br>
+${fitDesc[p.fitType]||''}`;
+ const warns=[];
+ if(tenonMur<1)warns.push(`Tenon trop mince (${tenonMur} mm) — augmenter e ou réduire gW/jeu`);
+ if(p.gW>=p.e)warns.push(`Rainure (${p.gW}mm) ≥ épaisseur paroi (${p.e}mm) : impossible`);
+ if(p.bn>p.e-0.5)warns.push(`Ball-nose Ø${p.bn}mm trop grand pour paroi ${p.e}mm`);
+ if(p.hL<p.gD+2)warns.push(`Couvercle ${p.hL}mm trop bas pour rainure ${p.gD}mm`);
+ const rMax=rect?Math.min(p.L,p.W)/2:p.shape==='hex'?p.L/2/HK:p.L/2;
+ if(rMax<=p.e)warns.push('Paroi trop épaisse : plus de cavité intérieure');
+ $('warns').innerHTML=warns.map(w=>`<div class="warn">⚠ ${w}</div>`).join('');
+ const iL=rect?+(p.L-2*p.e).toFixed(1):'—';
+ const iW=rect?+(p.W-2*p.e).toFixed(1):'—';
+ $('psum').innerHTML=`
+<div class="mv"><div class="ml">Int. L/D</div><div class="mn">${iL} mm</div></div>
+<div class="mv"><div class="ml">Int. l</div><div class="mn">${rect?iW+' mm':'= L int.'}</div></div>
+<div class="mv"><div class="ml">Haut. base</div><div class="mn">${hB} mm</div></div>
+<div class="mv"><div class="ml">Haut. couvercle</div><div class="mn">${hL} mm</div></div>
+<div class="mv"><div class="ml">Déport fond</div><div class="mn">${+(p.bn/2).toFixed(2)} mm</div></div>
+<div class="mv"><div class="ml">Tenon</div><div class="mn">${tenonMur} mm</div></div>
+<div class="mv"><div class="ml">Jeu</div><div class="mn">${p.gap} mm</div></div>
+<div class="mv"><div class="ml">Rainure l×p</div><div class="mn">${p.gW}×${p.gD} mm</div></div>`;
+ draw('cvB',p,false);
+ draw('cvL',p,true);
+ genDXF(p);
+ genNotice(p);
 }
 
-function draw(id,p,isLid){
-  const cv=document.getElementById(id);
-  const CW=cv.width,CH=cv.height;
-  const ctx=cv.getContext('2d');
-  ctx.clearRect(0,0,CW,CH);
-  const cBlue='#185FA5',cGreen='#0F6E56',cAmber='#BA7517',cOrange='#D85A30';
-  const pad=28;
-  let d1=p.L, d2=(p.shape==='rect')?p.W:p.L;
-  const scX=(CW-2*pad)/d1, scY=(CH-2*pad)/d2;
-  const sc=Math.min(scX,scY);
-  const ox=pad+(CW-2*pad-d1*sc)/2;
-  const oy=pad+(CH-2*pad-d2*sc)/2;
-  const e=p.e,gW=p.gW,gap=p.gap;
-
-  if(p.shape==='rect'){
-    const Lv=p.L,Wv=p.W;
-    function rr(xo,yo,w,h,col,lw,dash){
-      if(w<=0||h<=0)return;
-      ctx.strokeStyle=col;ctx.lineWidth=lw;
-      if(dash)ctx.setLineDash(dash);else ctx.setLineDash([]);
-      const r=Math.min(3,w*sc/4,h*sc/4);
-      ctx.beginPath();ctx.roundRect(ox+xo*sc,oy+yo*sc,w*sc,h*sc,r);ctx.stroke();
-      ctx.setLineDash([]);
-    }
-    if(!isLid){
-      rr(0,0,Lv,Wv,cBlue,1.5);
-      rr(e,e,Lv-2*e,Wv-2*e,cGreen,1);
-      const off=p.bn/2;
-      rr(e+off,e+off,Lv-2*(e+off),Wv-2*(e+off),cAmber,0.8,[4,3]);
-    }else{
-      if(p.fitType==='overlay'){
-        rr(0,0,Lv,Wv,cBlue,1.5);
-        rr(e-gW,e-gW,Lv-2*(e-gW),Wv-2*(e-gW),cOrange,1.5);
-        rr(e,e,Lv-2*e,Wv-2*e,cOrange,1);
-      }else{
-        const tO=e-gW-gap;
-        rr(tO,tO,Lv-2*tO,Wv-2*tO,cBlue,1.5);
-        rr(e-gap,e-gap,Lv-2*(e-gap),Wv-2*(e-gap),cOrange,1.2);
-      }
-    }
-  }else if(p.shape==='round'){
-    const R=p.L/2;
-    const cxc=ox+R*sc,cyc=oy+R*sc;
-    function cc(r,col,lw,dash){
-      if(r<=0)return;
-      ctx.strokeStyle=col;ctx.lineWidth=lw;
-      if(dash)ctx.setLineDash(dash);else ctx.setLineDash([]);
-      ctx.beginPath();ctx.arc(cxc,cyc,r*sc,0,Math.PI*2);ctx.stroke();ctx.setLineDash([]);
-    }
-    if(!isLid){cc(R,cBlue,1.5);cc(R-e,cGreen,1);cc(R-e-p.bn/2,cAmber,0.8,[4,3]);}
-    else{
-      if(p.fitType==='overlay'){cc(R,cBlue,1.5);cc(R-(e-gW),cOrange,1.5);cc(R-e,cOrange,1);}
-      else{cc(R-(e-gW-gap),cBlue,1.5);cc(R-(e-gap),cOrange,1.2);}
-    }
-  }else if(p.shape==='hex'){
-    const R=p.L/2;
-    const cxh=ox+d1*sc/2,cyh=oy+d2*sc/2;
-    function hx(r,col,lw,dash){
-      if(r<=0)return;
-      ctx.strokeStyle=col;ctx.lineWidth=lw;
-      if(dash)ctx.setLineDash(dash);else ctx.setLineDash([]);
-      ctx.beginPath();
-      for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;ctx.lineTo(cxh+r*sc*Math.cos(a),cyh+r*sc*Math.sin(a));}
-      ctx.closePath();ctx.stroke();ctx.setLineDash([]);
-    }
-    if(!isLid){hx(R,cBlue,1.5);hx(R-e,cGreen,1);hx(R-e-p.bn/2,cAmber,0.8,[4,3]);}
-    else{
-      if(p.fitType==='overlay'){hx(R,cBlue,1.5);hx(R-(e-gW),cOrange,1.5);hx(R-e,cOrange,1);}
-      else{hx(R-(e-gW-gap),cBlue,1.5);hx(R-(e-gap),cOrange,1.2);}
-    }
+// ── Aperçu ──────────────────────────────────────────────────────────────────
+const STY={
+ CONTOUR_EXT:['#185FA5',1.5],CAVITE_INT:['#0F6E56',1],FOND_BALLNOSE:['#BA7517',.8,[4,3]],
+ RAINURE_EXT:['#D85A30',1.5],RAINURE_INT:['#D85A30',1]
+};
+function draw(id,p,lid){
+ const cv=$(id),CW=cv.width,CH=cv.height,ctx=cv.getContext('2d'),pad=28;
+ ctx.clearRect(0,0,CW,CH);
+ const rect=p.shape==='rect',d1=p.L,d2=rect?p.W:p.L,R=p.L/2;
+ const sc=Math.min((CW-2*pad)/d1,(CH-2*pad)/d2);
+ const ox=pad+(CW-2*pad-d1*sc)/2,oy=pad+(CH-2*pad-d2*sc)/2;
+ spec(p,lid).forEach(([d,lay])=>{
+  const[col,lw,dash]=STY[lay];
+  ctx.strokeStyle=col;ctx.lineWidth=lw;ctx.setLineDash(dash||[]);ctx.beginPath();
+  if(rect){
+   const w=p.L-2*d,h=p.W-2*d;
+   if(w<=0||h<=0)return;
+   const r=Math.min(3,w*sc/4,h*sc/4);
+   if(ctx.roundRect)ctx.roundRect(ox+d*sc,oy+d*sc,w*sc,h*sc,r);
+   else ctx.rect(ox+d*sc,oy+d*sc,w*sc,h*sc);
+  }else{
+   const cx=ox+d1*sc/2,cy=oy+d2*sc/2;
+   if(p.shape==='round'){
+    const r=R-d;if(r<=0)return;
+    ctx.arc(cx,cy,r*sc,0,Math.PI*2);
+   }else{
+    const r=R-d*HK;if(r<=0)return;
+    for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;ctx.lineTo(cx+r*sc*Math.cos(a),cy+r*sc*Math.sin(a));}
+    ctx.closePath();
+   }
   }
-  ctx.font='10px system-ui';ctx.fillStyle='#888';
-  ctx.fillText(isLid?'Couvercle':(p.shape==='rect'?`L=${p.L}  l=${p.W}`:`D/S=${p.L}`),ox+4,oy-6);
+  ctx.stroke();
+ });
+ ctx.setLineDash([]);ctx.font='10px system-ui';ctx.fillStyle='#888';
+ ctx.fillText(lid?'Couvercle':(rect?`L=${p.L} l=${p.W}`:`D/S=${p.L}`),ox+4,oy-6);
 }
 
-// ── DXF ──────────────────────────────────────────────────────────────────────
+// ── DXF (AC1009 / R12) ──────────────────────────────────────────────────────
 let dxfB='',dxfL='';
-function dxfHdr(t){return `999\nDwgBox ${t} - chtipanda.github.io/dwgbox\n  0\nSECTION\n  2\nHEADER\n  9\n$ACADVER\n  1\nAC1009\n  0\nENDSEC\n  0\nSECTION\n  2\nTABLES\n  0\nTABLE\n  2\nLAYER\n  0\nLAYER\n  2\nCONTOUR_EXT\n 70\n0\n 62\n7\n  6\nCONTINUOUS\n  0\nLAYER\n  2\nCAVITE_INT\n 70\n0\n 62\n3\n  6\nCONTINUOUS\n  0\nLAYER\n  2\nFOND_BALLNOSE\n 70\n0\n 62\n30\n  6\nCONTINUOUS\n  0\nLAYER\n  2\nRAINURE_EXT\n 70\n0\n 62\n4\n  6\nCONTINUOUS\n  0\nLAYER\n  2\nRAINURE_INT\n 70\n0\n 62\n1\n  6\nCONTINUOUS\n  0\nENDTAB\n  0\nENDSEC\n  0\nSECTION\n  2\nENTITIES\n`;}
-function dxfFtr(){return `  0\nENDSEC\n  0\nEOF\n`;}
-function Ln(x1,y1,x2,y2,l){return `  0\nLINE\n  8\n${l}\n 10\n${x1.toFixed(4)}\n 20\n${y1.toFixed(4)}\n 30\n0.0\n 11\n${x2.toFixed(4)}\n 21\n${y2.toFixed(4)}\n 31\n0.0\n`;}
-function Ar(cx,cy,r,a1,a2,l){return `  0\nARC\n  8\n${l}\n 10\n${cx.toFixed(4)}\n 20\n${cy.toFixed(4)}\n 30\n0.0\n 40\n${r.toFixed(4)}\n 50\n${a1.toFixed(4)}\n 51\n${a2.toFixed(4)}\n`;}
-function Ci(cx,cy,r,l){return `  0\nCIRCLE\n  8\n${l}\n 10\n${cx.toFixed(4)}\n 20\n${cy.toFixed(4)}\n 30\n0.0\n 40\n${r.toFixed(4)}\n`;}
-function rectDXF(x,y,w,h,lay,r){
-  r=r||2;if(w<2*r+1||h<2*r+1)r=0;if(w<=0||h<=0)return '';
-  if(r<=0)return Ln(x,y,x+w,y,lay)+Ln(x+w,y,x+w,y+h,lay)+Ln(x+w,y+h,x,y+h,lay)+Ln(x,y+h,x,y,lay);
-  return Ln(x+r,y,x+w-r,y,lay)+Ar(x+w-r,y+r,r,270,360,lay)
-        +Ln(x+w,y+r,x+w,y+h-r,lay)+Ar(x+w-r,y+h-r,r,0,90,lay)
-        +Ln(x+w-r,y+h,x+r,y+h,lay)+Ar(x+r,y+h-r,r,90,180,lay)
-        +Ln(x,y+h-r,x,y+r,lay)+Ar(x+r,y+r,r,180,270,lay);
+const LAYERS=[['CONTOUR_EXT',7],['CAVITE_INT',3],['FOND_BALLNOSE',30],['RAINURE_EXT',4],['RAINURE_INT',1]];
+function dxfHdr(t){
+ let s=`999\nDwgBox ${t} - chtipanda.github.io/dxfbox\n 0\nSECTION\n 2\nHEADER\n 9\n$ACADVER\n 1\nAC1009\n 0\nENDSEC\n 0\nSECTION\n 2\nTABLES\n 0\nTABLE\n 2\nLTYPE\n 70\n1\n 0\nLTYPE\n 2\nCONTINUOUS\n 70\n0\n 3\nSolid line\n 72\n65\n 73\n0\n 40\n0.0\n 0\nENDTAB\n 0\nTABLE\n 2\nLAYER\n 70\n${LAYERS.length}\n`;
+ LAYERS.forEach(([n,c])=>{s+=` 0\nLAYER\n 2\n${n}\n 70\n0\n 62\n${c}\n 6\nCONTINUOUS\n`;});
+ return s+` 0\nENDTAB\n 0\nENDSEC\n 0\nSECTION\n 2\nENTITIES\n`;
+}
+function dxfFtr(){return ` 0\nENDSEC\n 0\nEOF\n`;}
+const f4=v=>v.toFixed(4);
+function Ln(x1,y1,x2,y2,l){return ` 0\nLINE\n 8\n${l}\n 10\n${f4(x1)}\n 20\n${f4(y1)}\n 30\n0.0\n 11\n${f4(x2)}\n 21\n${f4(y2)}\n 31\n0.0\n`;}
+function Ar(cx,cy,r,a1,a2,l){return ` 0\nARC\n 8\n${l}\n 10\n${f4(cx)}\n 20\n${f4(cy)}\n 30\n0.0\n 40\n${f4(r)}\n 50\n${f4(a1)}\n 51\n${f4(a2)}\n`;}
+function Ci(cx,cy,r,l){return ` 0\nCIRCLE\n 8\n${l}\n 10\n${f4(cx)}\n 20\n${f4(cy)}\n 30\n0.0\n 40\n${f4(r)}\n`;}
+function rectDXF(x,y,w,h,lay){
+ if(w<=0||h<=0)return '';
+ let r=2;if(w<2*r+1||h<2*r+1)r=0;
+ if(r<=0)return Ln(x,y,x+w,y,lay)+Ln(x+w,y,x+w,y+h,lay)+Ln(x+w,y+h,x,y+h,lay)+Ln(x,y+h,x,y,lay);
+ return Ln(x+r,y,x+w-r,y,lay)+Ar(x+w-r,y+r,r,270,360,lay)
+  +Ln(x+w,y+r,x+w,y+h-r,lay)+Ar(x+w-r,y+h-r,r,0,90,lay)
+  +Ln(x+w-r,y+h,x+r,y+h,lay)+Ar(x+r,y+h-r,r,90,180,lay)
+  +Ln(x,y+h-r,x,y+r,lay)+Ar(x+r,y+r,r,180,270,lay);
 }
 function hexDXF(cx,cy,R,lay){
-  if(R<=0)return '';
-  let s='';const pts=[];
-  for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;pts.push([cx+R*Math.cos(a),cy+R*Math.sin(a)]);}
-  for(let i=0;i<6;i++)s+=Ln(pts[i][0],pts[i][1],pts[(i+1)%6][0],pts[(i+1)%6][1],lay);
-  return s;
+ if(R<=0)return '';
+ let s='';const pts=[];
+ for(let i=0;i<6;i++){const a=Math.PI/3*i-Math.PI/6;pts.push([cx+R*Math.cos(a),cy+R*Math.sin(a)]);}
+ for(let i=0;i<6;i++)s+=Ln(pts[i][0],pts[i][1],pts[(i+1)%6][0],pts[(i+1)%6][1],lay);
+ return s;
 }
-function buildDXF(p,isLid){
-  const e=p.e,gW=p.gW,gap=p.gap,bn=p.bn;
-  let body='';
-  if(p.shape==='rect'){
-    const Lv=p.L,Wv=p.W;
-    if(!isLid){
-      body+=rectDXF(0,0,Lv,Wv,'CONTOUR_EXT');
-      body+=rectDXF(e,e,Lv-2*e,Wv-2*e,'CAVITE_INT');
-      body+=rectDXF(e+bn/2,e+bn/2,Lv-2*(e+bn/2),Wv-2*(e+bn/2),'FOND_BALLNOSE');
-    }else{
-      if(p.fitType==='overlay'){
-        body+=rectDXF(0,0,Lv,Wv,'CONTOUR_EXT');
-        body+=rectDXF(e-gW,e-gW,Lv-2*(e-gW),Wv-2*(e-gW),'RAINURE_EXT');
-        body+=rectDXF(e,e,Lv-2*e,Wv-2*e,'RAINURE_INT');
-      }else{
-        const tO=e-gW-gap;
-        body+=rectDXF(tO,tO,Lv-2*tO,Wv-2*tO,'CONTOUR_EXT');
-        body+=rectDXF(e-gap,e-gap,Lv-2*(e-gap),Wv-2*(e-gap),'RAINURE_INT');
-      }
-    }
-  }else if(p.shape==='round'){
-    const R=p.L/2;
-    if(!isLid){body+=Ci(0,0,R,'CONTOUR_EXT');body+=Ci(0,0,R-e,'CAVITE_INT');body+=Ci(0,0,R-e-bn/2,'FOND_BALLNOSE');}
-    else{
-      if(p.fitType==='overlay'){body+=Ci(0,0,R,'CONTOUR_EXT');body+=Ci(0,0,R-(e-gW),'RAINURE_EXT');body+=Ci(0,0,R-e,'RAINURE_INT');}
-      else{body+=Ci(0,0,R-(e-gW-gap),'CONTOUR_EXT');body+=Ci(0,0,R-(e-gap),'RAINURE_INT');}
-    }
-  }else if(p.shape==='hex'){
-    const R=p.L/2;
-    if(!isLid){body+=hexDXF(0,0,R,'CONTOUR_EXT');body+=hexDXF(0,0,R-e,'CAVITE_INT');body+=hexDXF(0,0,R-e-bn/2,'FOND_BALLNOSE');}
-    else{
-      if(p.fitType==='overlay'){body+=hexDXF(0,0,R,'CONTOUR_EXT');body+=hexDXF(0,0,R-(e-gW),'RAINURE_EXT');body+=hexDXF(0,0,R-e,'RAINURE_INT');}
-      else{body+=hexDXF(0,0,R-(e-gW-gap),'CONTOUR_EXT');body+=hexDXF(0,0,R-(e-gap),'RAINURE_INT');}
-    }
-  }
-  return dxfHdr(isLid?'COUVERCLE':'BASE')+body+dxfFtr();
+function buildDXF(p,lid){
+ const R=p.L/2,sp=spec(p,lid),sh=Math.max(0,-Math.min(...sp.map(s=>s[0])));let body='';
+ sp.forEach(([d,lay])=>{
+  if(p.shape==='rect')body+=rectDXF(d+sh,d+sh,p.L-2*d,p.W-2*d,lay);
+  else if(p.shape==='round'){if(R-d>0)body+=Ci(0,0,R-d,lay);}
+  else body+=hexDXF(0,0,R-d*HK,lay);
+ });
+ return dxfHdr(lid?'COUVERCLE':'BASE')+body+dxfFtr();
 }
 function genDXF(p){
-  dxfB=buildDXF(p,false);dxfL=buildDXF(p,true);
-  document.getElementById('dBase').textContent=dxfB.substring(0,2500)+(dxfB.length>2500?'\n... (complet au téléchargement)':'');
-  document.getElementById('dLid').textContent=dxfL.substring(0,2500)+(dxfL.length>2500?'\n... (complet au téléchargement)':'');
+ dxfB=buildDXF(p,false);dxfL=buildDXF(p,true);
+ const cut=s=>s.substring(0,2500)+(s.length>2500?'\n... (complet au téléchargement)':'');
+ $('dBase').textContent=cut(dxfB);
+ $('dLid').textContent=cut(dxfL);
 }
+
 function genNotice(p){
-  const tenonMur=+(p.e-p.gW-p.gap).toFixed(2);
-  document.getElementById('notTxt').textContent=
+ const tenonMur=+(p.e-p.gW-p.gap).toFixed(2);
+ const shape=p.shape==='rect'?'Rectangulaire':p.shape==='round'?'Ronde':'Hexagonale';
+ const fit={overlay:'Recouvrement extérieur',inner:'Recouvrement interne',shext:'Épaulement externe',shint:'Épaulement interne'}[p.fitType]||p.fitType;
+ $('notTxt').textContent=
 `NOTICE D'UTILISATION — DwgBox v1.0
 ====================================
-https://chtipanda.github.io/dwgbox/
+https://chtipanda.github.io/dxfbox/
 
-Forme         : ${p.shape==='rect'?'Rectangulaire':p.shape==='round'?'Ronde':'Hexagonale'}
-Emboîtement   : ${p.fitType==='overlay'?'Recouvrement':'Intérieur'}
-Dimensions    : ${p.L} × ${p.shape==='rect'?p.W:p.L} × ${p.H} mm
-Épaisseur     : ${p.e} mm
+Forme : ${shape}
+Emboîtement : ${fit}
+Dimensions : ${p.L} × ${p.shape==='rect'?p.W:p.L} × ${p.H} mm
+Épaisseur : ${p.e} mm
 
 CALCUL EMBOITEMENT
 ------------------
-  Largeur rainure        : ${p.gW} mm
-  Profondeur rainure     : ${p.gD} mm
-  Jeu fonctionnel        : ${p.gap} mm
-  Reste côté ext. paroi  : ${+(p.e-p.gW).toFixed(2)} mm
-  Épaisseur tenon        : e − gW − jeu = ${tenonMur} mm
-  Hauteur base           : ${p.hB} mm
-  Hauteur couvercle      : ${p.hL} mm
+Largeur rainure : ${p.gW} mm
+Profondeur rainure : ${p.gD} mm
+Jeu fonctionnel : ${p.gap} mm
+Reste côté ext. paroi : ${+(p.e-p.gW).toFixed(2)} mm
+Épaisseur tenon : e − gW − jeu = ${tenonMur} mm
+Hauteur base : ${p.hB} mm
+Hauteur couvercle : ${p.hL} mm
 
 COUCHES DXF (AC1009 — R12)
 --------------------------
-  CONTOUR_EXT    Découpe contour extérieur
-  CAVITE_INT     Poche intérieure
-  FOND_BALLNOSE  Chemin fond déporté Ø/2=${+(p.bn/2).toFixed(2)}mm (ball-nose Ø${p.bn}mm)
-  RAINURE_EXT    Bord extérieur de la rainure
-  RAINURE_INT    Bord intérieur de la rainure
+CONTOUR_EXT    Découpe contour extérieur
+CAVITE_INT     Poche intérieure
+FOND_BALLNOSE  Chemin fond déporté Ø/2=${+(p.bn/2).toFixed(2)}mm (ball-nose Ø${p.bn}mm)
+RAINURE_EXT    Bord extérieur de la rainure
+RAINURE_INT    Bord intérieur de la rainure
 
 ORDRE USINAGE — BASE
 ---------------------
-  1. Poche (CAVITE_INT)
-  2. Fond (FOND_BALLNOSE) ball-nose Ø${p.bn}mm
-  3. Contour (CONTOUR_EXT) avec onglets
+1. Poche (CAVITE_INT)
+2. Fond (FOND_BALLNOSE) ball-nose Ø${p.bn}mm
+3. Contour (CONTOUR_EXT) avec onglets
 
 ORDRE USINAGE — COUVERCLE
 --------------------------
-  1. Rainure RAINURE_EXT → RAINURE_INT, prof. ${p.gD}mm
-  2. Contour (CONTOUR_EXT)
+1. Rainure RAINURE_EXT → RAINURE_INT, prof. ${p.gD}mm
+2. Contour (CONTOUR_EXT)
 
-LOGICIELS
+${p.fitType==='shint'?`ÉPAULEMENT INTERNE
+------------------
+Base : feuillure RAINURE_EXT (mur gardé à l'extérieur : ${+(p.e-p.gW).toFixed(2)} mm), prof. ${p.gD}mm
+Couvercle : RAINURE_INT = tenon à ${+(p.e-p.gW+p.gap).toFixed(2)} mm du bord ; épargner l'intérieur,
+usiner l'anneau extérieur, prof. ${p.gD}mm
+
+`:''}${p.fitType==='inner'?`RECOUVREMENT INTERNE
+--------------------
+Couvercle : même contour que la base, tenon plein à ${p.e} mm + jeu ${p.gap} mm du bord
+RAINURE_INT : épargner l'intérieur (tenon), usiner l'anneau extérieur, prof. ${p.gD}mm
+
+`:''}${p.fitType==='overlay'?`RECOUVREMENT EXTÉRIEUR
+----------------------
+Couvercle : contour ${+(p.gW+p.gap).toFixed(2)} mm plus grand que la base, de chaque côté
+Poche RAINURE_INT, prof. ${p.gD}mm : jupe de ${p.gW} mm autour de la base, jeu ${p.gap} mm
+
+`:''}${p.fitType==='shext'?`ÉPAULEMENT EXTERNE
+-------------------
+Base : feuillure RAINURE_INT, à l'extérieur de la ligne, prof. ${p.gD}mm
+Couvercle : poche RAINURE_INT, à l'intérieur de la ligne, prof. ${p.gD}mm
+Jupe du couvercle : ${+(p.gW-p.gap).toFixed(2)} mm
+
+`:''}LOGICIELS
 ---------
-  Aspire   : Fichier > Importer > Vecteurs DXF
-  CamBam   : Ouvrir .dxf > opération par couche
-  Krabscam : Import DXF > couches auto
+Aspire : Fichier > Importer > Vecteurs DXF
+CamBam : Ouvrir .dxf > opération par couche
+Krabscam : Import DXF > couches auto
 `;
 }
 
 function st(t){
-  ['base','lid','notice'].forEach(n=>{
-    document.getElementById('t-'+n).className='tab'+(n===t?' on':'');
-    document.getElementById('p-'+n).style.display=n===t?'':'none';
-  });
+ ['base','lid','notice'].forEach(n=>{
+  $('t-'+n).className='tab'+(n===t?' on':'');
+  $('p-'+n).style.display=n===t?'':'none';
+ });
 }
 function dl(w){
-  const c=w==='base'?dxfB:dxfL;
-  const fn=w==='base'?'boite_base.dxf':'boite_couvercle.dxf';
-  const a=document.createElement('a');
-  a.href=URL.createObjectURL(new Blob([c],{type:'application/dxf'}));
-  a.download=fn;a.click();
+ const c=w==='base'?dxfB:dxfL;
+ const a=document.createElement('a');
+ a.href=URL.createObjectURL(new Blob([c],{type:'application/dxf'}));
+ a.download=w==='base'?'boite_base.dxf':'boite_couvercle.dxf';
+ document.body.appendChild(a);a.click();document.body.removeChild(a);
+ setTimeout(()=>URL.revokeObjectURL(a.href),1000);
 }
-function cp(w){
-  const c=w==='base'?dxfB:dxfL;
-  navigator.clipboard.writeText(c).catch(()=>{const t=document.createElement('textarea');t.value=c;document.body.appendChild(t);t.select();document.execCommand('copy');document.body.removeChild(t);});
+function copyText(t){
+ const fb=s=>{const ta=document.createElement('textarea');ta.value=s;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);};
+ if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(t).catch(()=>fb(t));
+ else fb(t);
 }
-function cpNotice(){
-  const t=document.getElementById('notTxt').textContent;
-  navigator.clipboard.writeText(t).catch(()=>{const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');document.body.removeChild(ta);});
-}
-
+function cp(w){copyText(w==='base'?dxfB:dxfL);}
+function cpNotice(){copyText($('notTxt').textContent);}
 update();
 </script>
 </body>
